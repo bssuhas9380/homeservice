@@ -1,0 +1,442 @@
+/* Login Page Styles - Matching Figma Design */
+
+.login-page {
+  min-height: 100vh;
+  background: linear-gradient(180deg, #FFFFFF 0%, #E8F4F8 100%);
+}
+
+/* Header */
+.header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  
+  &__container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 16px 32px;
+    
+    @media (max-width: 768px) {
+      padding: 12px 16px;
+    }
+  }
+  
+  &__logo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    text-decoration: none;
+    
+    &-icon {
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, #0D436B 0%, #366F85 100%);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      
+      span {
+        color: #FFFFFF;
+        font-family: 'Open Sans', sans-serif;
+        font-size: 18px;
+        font-weight: 700;
+      }
+    }
+    
+    &-text {
+      color: #181D27;
+      font-family: 'Open Sans', sans-serif;
+      font-size: 20px;
+      font-weight: 700;
+      line-height: 32px;
+      letter-spacing: 0.07px;
+    }
+  }
+}
+
+/* Main Content */
+.login-content {
+  display: flex;
+  min-height: 100vh;
+  padding-top: 64px;
+  
+  @media (max-width: 1024px) {
+    flex-direction: column;
+  }
+}
+
+/* Left Section - Form */
+.login-form-section {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  
+  @media (max-width: 768px) {
+    padding: 24px 16px;
+  }
+}
+
+.login-form-wrapper {
+  width: 100%;
+  max-width: 400px;
+}
+
+/* Login Header */
+.login-header {
+  margin-bottom: 32px;
+  
+  &__welcome {
+    display: block;
+    color: #366F85;
+    font-family: 'Open Sans', sans-serif;
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 24px;
+    margin-bottom: 4px;
+  }
+  
+  &__title {
+    color: #0D436B;
+    font-family: 'Open Sans', sans-serif;
+    font-size: 32px;
+    font-weight: 700;
+    line-height: 40px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    
+    @media (max-width: 480px) {
+      font-size: 24px;
+      line-height: 32px;
+    }
+  }
+  
+  &__subtitle {
+    color: #535862;
+    font-family: 'Open Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 22px;
+  }
+}
+
+/* Role Dropdown */
+.role-dropdown {
+  position: relative;
+  margin-bottom: 24px;
+  
+  &__trigger {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 180px;
+    padding: 12px 16px;
+    background: #FFFFFF;
+    border: 1px solid #E9EAEB;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    
+    span {
+      color: #181D27;
+      font-family: 'Open Sans', sans-serif;
+      font-size: 14px;
+      font-weight: 500;
+    }
+    
+    svg {
+      transition: transform 0.2s ease;
+      color: #535862;
+      
+      &.rotated {
+        transform: rotate(180deg);
+      }
+    }
+    
+    &:hover, &.active {
+      border-color: #0D436B;
+    }
+  }
+  
+  &__menu {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    width: 180px;
+    background: #FFFFFF;
+    border: 1px solid #E9EAEB;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    list-style: none;
+    padding: 4px 0;
+    z-index: 10;
+    
+    li {
+      padding: 10px 16px;
+      color: #181D27;
+      font-family: 'Open Sans', sans-serif;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.2s ease;
+      
+      &:hover {
+        background: #F5F9FB;
+      }
+      
+      &.selected {
+        background: #E8F4F8;
+        color: #0D436B;
+      }
+    }
+  }
+}
+
+/* Login Form */
+.login-form {
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 12px;
+  padding: 24px;
+  border: 1px solid rgba(13, 67, 107, 0.1);
+}
+
+.form-group {
+  margin-bottom: 20px;
+  
+  &:last-of-type {
+    margin-bottom: 24px;
+  }
+}
+
+.form-label {
+  display: block;
+  color: #181D27;
+  font-family: 'Open Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  margin-bottom: 8px;
+}
+
+.form-input {
+  width: 100%;
+  padding: 12px 16px;
+  background: #FFFFFF;
+  border: 1px solid #E9EAEB;
+  border-radius: 8px;
+  color: #181D27;
+  font-family: 'Open Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 20px;
+  transition: border-color 0.2s ease;
+  
+  &::placeholder {
+    color: #9CA0A8;
+  }
+  
+  &:focus {
+    outline: none;
+    border-color: #0D436B;
+    box-shadow: 0 0 0 3px rgba(13, 67, 107, 0.1);
+  }
+}
+
+.form-hint {
+  display: block;
+  margin-top: 6px;
+  color: #9CA0A8;
+  font-family: 'Open Sans', sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+}
+
+/* Error Message */
+.error-message {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  color: #dc2626;
+  font-family: 'Open Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 16px;
+
+  svg {
+    flex-shrink: 0;
+  }
+}
+
+/* Spinner */
+.spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin-right: 8px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Login Button */
+.btn-login {
+  width: 100%;
+  padding: 14px 24px;
+  background: #0D436B;
+  border: none;
+  border-radius: 8px;
+  color: #FFFFFF;
+  font-family: 'Open Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  &:hover:not(:disabled) {
+    background: #0a3555;
+  }
+  
+  &:active:not(:disabled) {
+    transform: scale(0.98);
+  }
+  
+  &:focus-visible {
+    outline: 2px solid #0D436B;
+    outline-offset: 2px;
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+/* Login Footer */
+.login-footer {
+  margin-top: 24px;
+  text-align: center;
+  
+  &__register {
+    color: #535862;
+    font-family: 'Open Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 400;
+    margin-bottom: 12px;
+  }
+}
+
+.link-register {
+  color: #0D436B;
+  font-weight: 500;
+  text-decoration: underline;
+  margin-left: 4px;
+  
+  &:hover {
+    color: #366F85;
+  }
+}
+
+.link-home {
+  color: #0D436B;
+  font-family: 'Open Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: underline;
+  
+  &:hover {
+    color: #366F85;
+  }
+}
+
+/* Right Section - Image */
+.login-image-section {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  
+  @media (max-width: 1024px) {
+    display: none;
+  }
+}
+
+.decorative-lines {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 100%;
+  height: 100%;
+  background-image: 
+    repeating-linear-gradient(
+      -45deg,
+      transparent,
+      transparent 40px,
+      rgba(13, 67, 107, 0.03) 40px,
+      rgba(13, 67, 107, 0.03) 42px
+    );
+  pointer-events: none;
+}
+
+.login-image-wrapper {
+  position: relative;
+  z-index: 1;
+  max-width: 450px;
+  padding: 40px;
+}
+
+.login-image {
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+}
+
+.login-image-placeholder {
+  width: 350px;
+  height: 300px;
+  background: linear-gradient(135deg, #E8F4F8 0%, #D5EBF3 100%);
+  border-radius: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  border: 2px dashed rgba(13, 67, 107, 0.3);
+  
+  svg {
+    opacity: 0.6;
+  }
+  
+  span {
+    color: #0D436B;
+    font-family: 'Open Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    opacity: 0.8;
+  }
+}

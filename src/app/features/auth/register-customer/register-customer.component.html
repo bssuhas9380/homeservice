@@ -1,0 +1,167 @@
+<!-- Customer Registration Page -->
+<div class="register-page">
+  <!-- Header -->
+  <header class="header">
+    <div class="header__container">
+      <a routerLink="/" class="header__logo" aria-label="HouseMate Home">
+        <div class="header__logo-icon">
+          <span>H</span>
+        </div>
+        <span class="header__logo-text">HouseMate</span>
+      </a>
+      <nav class="header__nav">
+        <a routerLink="/login" [queryParams]="{role: 'customer'}" class="header__nav-link">Customer Login</a>
+        <a routerLink="/login" [queryParams]="{role: 'expert'}" class="header__nav-link">Expert Login</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="register-content">
+    <!-- Left Section - Form -->
+    <div class="register-form-section">
+      <div class="register-form-wrapper">
+        <!-- Title -->
+        <div class="register-header">
+          <span class="register-header__subtitle">New User?</span>
+          <h1 class="register-header__title">REGISTER NOW!</h1>
+          <p class="register-header__description">
+            To connect with verified, trained home-service experts for ASAP or scheduled
+            services. Fast, transparent, and reliable.
+          </p>
+        </div>
+
+        <!-- Role Dropdown -->
+        <div class="role-dropdown">
+          <button 
+            type="button" 
+            class="role-dropdown__trigger"
+            (click)="toggleDropdown()"
+            [class.active]="isDropdownOpen"
+          >
+            <span>{{ selectedRole === 'customer' ? 'Customer' : 'Expert' }}</span>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" [class.rotated]="isDropdownOpen">
+              <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+          
+          @if (isDropdownOpen) {
+            <ul class="role-dropdown__menu">
+              <li 
+                [class.selected]="selectedRole === 'customer'"
+                (click)="selectRole('customer')"
+              >
+                Customer
+              </li>
+              <li 
+                [class.selected]="selectedRole === 'expert'"
+                (click)="selectRole('expert')"
+              >
+                Expert
+              </li>
+            </ul>
+          }
+        </div>
+
+        <!-- Registration Form -->
+        <form [formGroup]="registrationForm" (ngSubmit)="onSubmit()" class="register-form">
+          <!-- Full Name -->
+          <div class="form-group">
+            <label for="fullName" class="form-label">Full Name</label>
+            <input
+              type="text"
+              id="fullName"
+              formControlName="fullName"
+              class="form-input"
+              placeholder="Enter your full name"
+            />
+          </div>
+
+          <!-- Email -->
+          <div class="form-group">
+            <label for="email" class="form-label">Email</label>
+            <input
+              type="email"
+              id="email"
+              formControlName="email"
+              class="form-input"
+              placeholder="john@example.com"
+            />
+          </div>
+
+          <!-- Mobile Number -->
+          <div class="form-group">
+            <label for="mobileNumber" class="form-label">Mobile Number</label>
+            <div class="input-with-prefix">
+              <span class="input-prefix">+91</span>
+              <input
+                type="tel"
+                id="mobileNumber"
+                formControlName="mobileNumber"
+                class="form-input"
+                placeholder="9876543210"
+              />
+            </div>
+          </div>
+
+          <!-- Password -->
+          <div class="form-group">
+            <label for="password" class="form-label">Password</label>
+            <input
+              type="password"
+              id="password"
+              formControlName="password"
+              class="form-input"
+              placeholder="Create a password"
+            />
+          </div>
+
+          <!-- Confirm Password -->
+          <div class="form-group">
+            <label for="confirmPassword" class="form-label">Confirm Password</label>
+            <input
+              type="password"
+              id="confirmPassword"
+              formControlName="confirmPassword"
+              class="form-input"
+              placeholder="Confirm your password"
+            />
+          </div>
+
+          <!-- Submit Button -->
+          <button type="submit" class="btn-register" [disabled]="!registrationForm.valid">
+            REGISTER
+          </button>
+        </form>
+
+        <!-- Login Link -->
+        <div class="register-footer">
+          <p class="register-footer__login">
+            Already have an account? 
+            <a routerLink="/login" class="link-login">Login here</a>
+          </p>
+          <a routerLink="/" class="link-home">Back to home</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Section - Image -->
+    <div class="register-image-section">
+      <div class="decorative-lines"></div>
+      <div class="register-image-wrapper">
+        <img 
+          src="assets/download.png" 
+          alt="Cleaning supplies illustration"
+          class="register-image"
+          onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+        />
+        <div class="register-image-placeholder" style="display: none;">
+          <svg width="80" height="80" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M4 16L8.586 11.414C9.367 10.633 10.633 10.633 11.414 11.414L16 16M14 14L15.586 12.414C16.367 11.633 17.633 11.633 18.414 12.414L20 14M14 8H14.01M6 20H18C19.105 20 20 19.105 20 18V6C20 4.895 19.105 4 18 4H6C4.895 4 4 4.895 4 6V18C4 19.105 4.895 20 6 20Z" stroke="#0D436B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span>Registration Image</span>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>

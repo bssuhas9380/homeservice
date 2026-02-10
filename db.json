@@ -1,0 +1,331 @@
+{
+  "users": [
+    {
+      "id": "cust-001",
+      "email": "john@example.com",
+      "password": "password123",
+      "role": "CUSTOMER",
+      "phone": "9876543210",
+      "name": "John Doe",
+      "age": 28,
+      "location": {
+        "city": "Pune",
+        "area": "Manjari Khurd"
+      },
+      "createdAt": "2026-01-15T10:00:00.000Z"
+    },
+    {
+      "id": "cust-002",
+      "email": "sarah@example.com",
+      "password": "password123",
+      "role": "CUSTOMER",
+      "phone": "9876543211",
+      "name": "Sarah Smith",
+      "age": 32,
+      "location": {
+        "city": "Mumbai",
+        "area": "Bandra"
+      },
+      "createdAt": "2026-01-20T10:00:00.000Z"
+    },
+    {
+      "id": "exp-001",
+      "email": "sara.khan@example.com",
+      "password": "password123",
+      "role": "EXPERT",
+      "phone": "9876543212",
+      "name": "Sara Khan",
+      "photo": "assets/images/experts/sara-khan.jpg",
+      "age": 35,
+      "location": {
+        "city": "Pune",
+        "area": "Kharadi"
+      },
+      "skills": ["Cooking", "Cleaning"],
+      "experience": 8,
+      "rating": 4.7,
+      "totalRatings": 122,
+      "languages": ["Hindi", "English"],
+      "hourlyRate": 299,
+      "isVerified": true,
+      "isOnline": true,
+      "createdAt": "2026-01-10T10:00:00.000Z"
+    },
+    {
+      "id": "exp-002",
+      "email": "rajesh.kumar@example.com",
+      "password": "password123",
+      "role": "EXPERT",
+      "phone": "9876543213",
+      "name": "Rajesh Kumar",
+      "photo": "assets/images/experts/rajesh-kumar.jpg",
+      "age": 40,
+      "location": {
+        "city": "Pune",
+        "area": "Wagholi"
+      },
+      "skills": ["Cleaning", "Gardening", "Electrician"],
+      "experience": 10,
+      "rating": 4.8,
+      "totalRatings": 256,
+      "languages": ["Hindi", "English", "Marathi"],
+      "hourlyRate": 350,
+      "isVerified": true,
+      "isOnline": true,
+      "createdAt": "2026-01-05T10:00:00.000Z"
+    },
+    {
+      "id": "exp-003",
+      "email": "priya.sharma@example.com",
+      "password": "password123",
+      "role": "EXPERT",
+      "phone": "9876543214",
+      "name": "Priya Sharma",
+      "photo": "assets/images/experts/priya-sharma.jpg",
+      "age": 28,
+      "location": {
+        "city": "Pune",
+        "area": "Viman Nagar"
+      },
+      "skills": ["Cooking", "Baby Sitting"],
+      "experience": 5,
+      "rating": 4.5,
+      "totalRatings": 89,
+      "languages": ["Hindi", "English"],
+      "hourlyRate": 275,
+      "isVerified": true,
+      "isOnline": false,
+      "createdAt": "2026-01-12T10:00:00.000Z"
+    },
+    {
+      "id": "exp-004",
+      "email": "amit.patel@example.com",
+      "password": "password123",
+      "role": "EXPERT",
+      "phone": "9876543215",
+      "name": "Amit Patel",
+      "photo": "assets/images/experts/amit-patel.jpg",
+      "age": 32,
+      "location": {
+        "city": "Pune",
+        "area": "Hadapsar"
+      },
+      "skills": ["Plumbing", "Electrician", "Carpentry"],
+      "experience": 7,
+      "rating": 4.6,
+      "totalRatings": 178,
+      "languages": ["Hindi", "Gujarati", "English"],
+      "hourlyRate": 325,
+      "isVerified": true,
+      "isOnline": true,
+      "createdAt": "2026-01-08T10:00:00.000Z"
+    }
+  ],
+  "services": [
+    {
+      "id": "srv-001",
+      "name": "Cleaning",
+      "description": "Professional home cleaning services",
+      "icon": "assets/images/services/cleaning-icon.png",
+      "image": "assets/images/services/cleaning.png",
+      "basePrice": 150,
+      "priceUnit": "per hour",
+      "isPopular": true,
+      "isFeatured": true,
+      "discount": 15
+    },
+    {
+      "id": "srv-002",
+      "name": "Cooking",
+      "description": "Home-cooked meals by expert chefs",
+      "icon": "assets/images/services/cooking-icon.png",
+      "image": "assets/images/services/cooking.png",
+      "basePrice": 200,
+      "priceUnit": "per hour",
+      "isPopular": true,
+      "isFeatured": true,
+      "discount": 15
+    },
+    {
+      "id": "srv-003",
+      "name": "Gardening",
+      "description": "Garden maintenance and landscaping",
+      "icon": "assets/images/services/gardening-icon.png",
+      "image": "assets/images/services/gardening.png",
+      "basePrice": 175,
+      "priceUnit": "per hour",
+      "isPopular": true,
+      "isFeatured": true,
+      "discount": 15
+    },
+    {
+      "id": "srv-004",
+      "name": "Plumbing",
+      "description": "Expert plumbing repairs and installations",
+      "icon": "assets/images/services/plumbing-icon.png",
+      "image": "assets/images/services/plumbing.png",
+      "basePrice": 250,
+      "priceUnit": "per hour",
+      "isPopular": true,
+      "isFeatured": false,
+      "discount": 0
+    },
+    {
+      "id": "srv-005",
+      "name": "Electrician",
+      "description": "Electrical repairs and installations",
+      "icon": "assets/images/services/electrician-icon.png",
+      "image": "assets/images/services/electrician.png",
+      "basePrice": 275,
+      "priceUnit": "per hour",
+      "isPopular": true,
+      "isFeatured": false,
+      "discount": 0
+    },
+    {
+      "id": "srv-006",
+      "name": "Baby Sitting",
+      "description": "Trusted childcare services",
+      "icon": "assets/images/services/babysitting-icon.png",
+      "image": "assets/images/services/babysitting.png",
+      "basePrice": 200,
+      "priceUnit": "per hour",
+      "isPopular": false,
+      "isFeatured": false,
+      "discount": 0
+    },
+    {
+      "id": "srv-007",
+      "name": "Carpentry",
+      "description": "Furniture repair and custom woodwork",
+      "icon": "assets/images/services/carpentry-icon.png",
+      "image": "assets/images/services/carpentry.png",
+      "basePrice": 300,
+      "priceUnit": "per hour",
+      "isPopular": false,
+      "isFeatured": false,
+      "discount": 0
+    },
+    {
+      "id": "srv-008",
+      "name": "Painting",
+      "description": "Interior and exterior painting services",
+      "icon": "assets/images/services/painting-icon.png",
+      "image": "assets/images/services/painting.png",
+      "basePrice": 225,
+      "priceUnit": "per hour",
+      "isPopular": false,
+      "isFeatured": false,
+      "discount": 0
+    }
+  ],
+  "addresses": [
+    {
+      "id": "addr-001",
+      "userId": "cust-001",
+      "label": "Home",
+      "houseType": "2BHK",
+      "locationType": "Home",
+      "line1": "Flat 304, Building A, Green Valley Apartments, M.G. Road",
+      "city": "Mumbai",
+      "state": "Maharashtra",
+      "pincode": "400001",
+      "contactName": "John Doe",
+      "contactNumber": "9876543210"
+    },
+    {
+      "id": "addr-002",
+      "userId": "cust-001",
+      "label": "Office",
+      "houseType": "3BHK",
+      "locationType": "Office",
+      "line1": "Tower B, 15th Floor, Tech Park, Bandra Kurla Complex",
+      "city": "Mumbai",
+      "state": "Maharashtra",
+      "pincode": "400051",
+      "contactName": "John Doe",
+      "contactNumber": "9876543210"
+    },
+    {
+      "id": "addr-003",
+      "userId": "cust-001",
+      "label": "Parents House",
+      "houseType": "3BHK",
+      "locationType": "Home",
+      "line1": "201, Manjari Khurd",
+      "city": "Pune",
+      "state": "Maharashtra",
+      "pincode": "143505",
+      "contactName": "John Doe Sr",
+      "contactNumber": "9876543220"
+    }
+  ],
+  "bookings": [],
+  "coupons": [
+    {
+      "id": "coup-001",
+      "code": "FIRST50",
+      "description": "First-time user discount",
+      "discountType": "percentage",
+      "discountValue": 50,
+      "minOrderValue": 500,
+      "maxDiscount": 100,
+      "validFrom": "2026-01-01T00:00:00.000Z",
+      "validTo": "2026-12-31T23:59:59.000Z",
+      "isActive": true
+    },
+    {
+      "id": "coup-002",
+      "code": "MONTHLY15",
+      "description": "15% off on monthly bookings",
+      "discountType": "percentage",
+      "discountValue": 15,
+      "minOrderValue": 1000,
+      "maxDiscount": 200,
+      "validFrom": "2026-01-01T00:00:00.000Z",
+      "validTo": "2026-12-31T23:59:59.000Z",
+      "isActive": true
+    },
+    {
+      "id": "coup-003",
+      "code": "SAVE100",
+      "description": "Flat ₹100 off",
+      "discountType": "flat",
+      "discountValue": 100,
+      "minOrderValue": 800,
+      "validFrom": "2026-01-01T00:00:00.000Z",
+      "validTo": "2026-12-31T23:59:59.000Z",
+      "isActive": true
+    }
+  ],
+  "faqs": [
+    {
+      "id": "faq-001",
+      "question": "How Can I Trust The Expert Sent By HouseMate?",
+      "answer": "We Thoroughly Vet All Of Our Experts Through Background Checks And Skill Assessments. You Can Also View Ratings And Reviews From Other Users Before Booking.",
+      "category": "trust",
+      "order": 1
+    },
+    {
+      "id": "faq-002",
+      "question": "What If The Service Provider Is Late Or Doesn't Show Up?",
+      "answer": "If a service provider is late by more than 15 minutes or doesn't show up, you can cancel the booking for a full refund. We also provide compensation credits for any inconvenience caused.",
+      "category": "service",
+      "order": 2
+    },
+    {
+      "id": "faq-003",
+      "question": "How do I make a payment?",
+      "answer": "We accept multiple payment methods including Credit/Debit Cards, UPI, Net Banking, and Cash on Delivery. All online payments are secured with industry-standard encryption.",
+      "category": "payment",
+      "order": 3
+    },
+    {
+      "id": "faq-004",
+      "question": "Can I reschedule or cancel my booking?",
+      "answer": "Yes, you can reschedule or cancel your booking up to 2 hours before the scheduled time without any charges. Cancellations made after this window may incur a small fee.",
+      "category": "booking",
+      "order": 4
+    }
+  ]
+}

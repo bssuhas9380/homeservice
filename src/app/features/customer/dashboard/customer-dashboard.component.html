@@ -1,0 +1,221 @@
+<!-- Customer Dashboard -->
+<div class="dashboard-page">
+  <!-- Header -->
+  <header class="header">
+    <div class="header__container">
+      <a routerLink="/" class="header__logo">
+        <div class="header__logo-icon"><span>H</span></div>
+        <span class="header__logo-text">HouseMate</span>
+      </a>
+      
+      <nav class="header__nav">
+        <a routerLink="/customer/services" class="header__nav-link">Services</a>
+        <a routerLink="/customer/bookings" class="header__nav-link">My Bookings</a>
+        
+        <div class="user-menu">
+          <button class="user-menu__trigger" (click)="toggleUserMenu()">
+            <div class="user-menu__avatar">
+              <img src="assets/images/default-avatar.png" alt="User" />
+            </div>
+            <span class="user-menu__name">{{ userName() }}</span>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" [class.rotated]="isUserMenuOpen()">
+              <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </button>
+          @if (isUserMenuOpen()) {
+            <div class="user-menu__dropdown">
+              <a routerLink="/customer/profile" class="user-menu__item">My Profile</a>
+              <a routerLink="/customer/bookings" class="user-menu__item">My Bookings</a>
+              <button class="user-menu__item user-menu__item--logout" (click)="logout()">Logout</button>
+            </div>
+          }
+        </div>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <!-- Welcome Section -->
+    <section class="welcome-section">
+      <div class="welcome-text">
+        <span class="welcome-label">Welcome back,</span>
+        <h1 class="welcome-name">{{ userName().toUpperCase() }}!</h1>
+      </div>
+      <a routerLink="/customer/book-service" class="btn-book-service">
+        BOOK SERVICE
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+          <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </a>
+    </section>
+
+    <!-- Upcoming Bookings -->
+    <section class="bookings-section">
+      <h2 class="section-title">Upcoming Bookings</h2>
+      
+      <div class="bookings-carousel">
+        <div class="bookings-track">
+          @if (isLoadingBookings()) {
+            <div class="loading-placeholder">Loading bookings...</div>
+          } @else if (upcomingBookings().length === 0) {
+            <!-- Show placeholder cards when no bookings -->
+            @for (i of [1, 2, 3]; track i) {
+              <div class="booking-card">
+                <div class="booking-card__header">
+                  <div class="booking-card__icon">
+                    <img src="assets/images/services/cleaning-icon.png" alt="Service" />
+                  </div>
+                  <span class="booking-card__price">₹299/- to pay</span>
+                </div>
+                <div class="booking-card__details">
+                  <div class="booking-card__date">31 Jan, Wednesday</div>
+                  <div class="booking-card__time">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                      <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                      <path d="M12 6V12L16 14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                    2.30 PM, booked for 2hrs
+                  </div>
+                  <div class="booking-card__address">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                      <path d="M21 10C21 17 12 23 12 23C12 23 3 17 3 10C3 5 7 1 12 1C17 1 21 5 21 10Z" stroke="currentColor" stroke-width="2"/>
+                    </svg>
+                    201, Manjari Khurd, Pune - 143505
+                  </div>
+                </div>
+                <div class="booking-card__actions">
+                  <a href="#" class="booking-card__link">View Details</a>
+                  <a href="#" class="booking-card__link">Modify Booking</a>
+                </div>
+              </div>
+            }
+          } @else {
+            @for (booking of upcomingBookings(); track booking.id) {
+              <div class="booking-card">
+                <div class="booking-card__header">
+                  <div class="booking-card__icon">
+                    <img src="assets/images/services/cleaning-icon.png" alt="Service" />
+                  </div>
+                  <span class="booking-card__price">₹{{ booking.totalAmount }}/- to pay</span>
+                </div>
+                <div class="booking-card__details">
+                  <div class="booking-card__date">{{ formatBookingDate(booking.date) }}</div>
+                  <div class="booking-card__time">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                      <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                      <path d="M12 6V12L16 14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                    {{ booking.timeSlot }}, booked for {{ booking.duration }}hrs
+                  </div>
+                  <div class="booking-card__address">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                      <path d="M21 10C21 17 12 23 12 23C12 23 3 17 3 10C3 5 7 1 12 1C17 1 21 5 21 10Z" stroke="currentColor" stroke-width="2"/>
+                    </svg>
+                    201, Manjari Khurd, Pune - 143505
+                  </div>
+                </div>
+                <div class="booking-card__actions">
+                  <a href="#" class="booking-card__link">View Details</a>
+                  <a href="#" class="booking-card__link">Modify Booking</a>
+                </div>
+              </div>
+            }
+          }
+        </div>
+        <button class="carousel-arrow">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <path d="M9 18L15 12L9 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </button>
+      </div>
+    </section>
+
+    <!-- Popular Services -->
+    <section class="popular-section">
+      <h2 class="section-title">Popular Services</h2>
+      <div class="popular-grid">
+        @for (service of popularServices; track service.name + $index) {
+          <div class="popular-card" (click)="bookService(service.id)">
+            <div class="popular-card__image">
+              <img [src]="service.image" [alt]="service.name" />
+            </div>
+            <span class="popular-card__name">{{ service.name }}</span>
+          </div>
+        }
+      </div>
+    </section>
+
+    <!-- Featured Services -->
+    <section class="featured-section">
+      <h2 class="section-title section-title--teal">Featured Services</h2>
+      <div class="featured-grid">
+        @for (service of featuredServices; track service.name) {
+          <div class="featured-card">
+            <div class="featured-card__image">
+              <img [src]="service.image" [alt]="service.name" />
+              <span class="featured-card__price">₹ {{ service.price }}/hr</span>
+            </div>
+            <div class="featured-card__content">
+              <h3 class="featured-card__title">{{ service.name }}</h3>
+              <p class="featured-card__desc">{{ service.description }}</p>
+              <span class="featured-card__discount">{{ service.discount }}</span>
+              <button class="featured-card__btn" (click)="bookService(service.id)">BOOK SERVICE</button>
+            </div>
+          </div>
+        }
+      </div>
+    </section>
+
+    <!-- FAQs -->
+    <section class="faq-section">
+      <h2 class="section-title section-title--teal">FAQs</h2>
+      <div class="faq-list">
+        @for (faq of faqs(); track faq.id; let i = $index) {
+          <div class="faq-item" [class.expanded]="expandedFaq() === i">
+            <button class="faq-question" (click)="toggleFaq(i)">
+              <span>{{ faq.question }}</span>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                @if (expandedFaq() === i) {
+                  <path d="M5 12H19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                } @else {
+                  <path d="M12 5V19M5 12H19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                }
+              </svg>
+            </button>
+            @if (expandedFaq() === i) {
+              <div class="faq-answer">{{ faq.answer }}</div>
+            }
+          </div>
+        }
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <div class="footer__container">
+        <div class="footer__column">
+          <h4>About Modimal</h4>
+          <a href="#">Privacy Policy</a>
+          <a href="#">Support System</a>
+          <a href="#">Terms & Condition</a>
+          <a href="#">Copyright Notice</a>
+        </div>
+        <div class="footer__column">
+          <h4>Help & Support</h4>
+          <a href="#">Orders & Shipping</a>
+          <a href="#">Returns & Refunds</a>
+          <a href="#">FAQs</a>
+          <a href="#">Contact Us</a>
+        </div>
+        <div class="footer__column">
+          <h4>Join Up</h4>
+          <a routerLink="/register/expert">Join As Expert</a>
+        </div>
+      </div>
+      <div class="footer__copyright">
+        <span>©</span> 2025 HouseMate. All Rights Reserved.
+      </div>
+    </footer>
+  </main>
+</div>

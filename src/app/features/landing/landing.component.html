@@ -1,0 +1,121 @@
+<!-- Header -->
+<header class="header">
+  <div class="header__container">
+    <!-- Logo -->
+    <a routerLink="/" class="header__logo" aria-label="HouseMate Home">
+      <div class="header__logo-icon">
+        <span>H</span>
+      </div>
+      <span class="header__logo-text">HouseMate</span>
+    </a>
+
+    <!-- Navigation -->
+    <nav class="header__nav" aria-label="Main navigation">
+      <a routerLink="/login" [queryParams]="{role: 'customer'}" class="header__nav-link">
+        Customer Login
+      </a>
+      <a routerLink="/login" [queryParams]="{role: 'expert'}" class="header__nav-link">
+        Expert Login
+      </a>
+    </nav>
+  </div>
+</header>
+
+<!-- Hero Section -->
+<section class="hero">
+  <div class="hero__container">
+    <!-- Left Content -->
+    <div class="hero__content">
+      <span class="hero__tagline">ON DEMAND</span>
+      <h1 class="hero__title">TRUSTED HOME SERVICES</h1>
+      <p class="hero__description">
+        Connect with verified, trained home-service experts for ASAP or scheduled
+        services. Fast, transparent, and reliable.
+      </p>
+      
+      <div class="hero__actions">
+        <a routerLink="/customer/book-service" class="btn btn-primary">
+          BOOK SERVICE
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </a>
+        <a routerLink="/register/expert" class="btn btn-outline">
+          BECOME AN EXPERT
+        </a>
+      </div>
+
+      <!-- Scroll Indicator -->
+      <button class="hero__scroll" (click)="scrollToFeatures()" aria-label="Scroll to features">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path d="M12 5V19M12 19L5 12M12 19L19 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span>Scroll</span>
+      </button>
+    </div>
+
+    <!-- Right Image Section -->
+    <div class="hero__image-section">
+      <!-- Hero Image -->
+      <div class="hero__image-wrapper">
+        <img 
+          src="assets/cleaning.png" 
+          alt="Professional cleaning service expert with mop and broom"
+          class="hero__image"
+        />
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Why Choose Section -->
+<section class="why-choose" id="why-choose">
+  <div class="why-choose__container">
+    <h2 class="why-choose__title">
+      Why choose <strong>HouseMate</strong>
+    </h2>
+
+    <div class="why-choose__features">
+      @for (feature of features; track feature.title) {
+        <article class="feature-card">
+          <div class="feature-card__icon">
+            <img 
+              [src]="'assets/' + feature.image" 
+              [alt]="feature.title"
+              class="feature-card__icon-image"
+            />
+          </div>
+          <h3 class="feature-card__title">{{ feature.title }}</h3>
+          <p class="feature-card__description">{{ feature.description }}</p>
+        </article>
+      }
+    </div>
+  </div>
+</section>
+
+<!-- CTA Section -->
+<section class="cta">
+  <div class="cta__container">
+    <h2 class="cta__title">Ready to Get Started?</h2>
+    <p class="cta__description">Join thousands of satisfied customers and expert providers</p>
+    
+    <div class="cta__actions">
+      <a routerLink="/customer/book-service" class="btn btn-primary">
+        BOOK SERVICE
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </a>
+      <a routerLink="/register/expert" class="btn btn-outline">
+        BECOME AN EXPERT
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer class="footer">
+  <div class="footer__container">
+    <p class="footer__copyright">© 2026 HouseMate. All rights reserved.</p>
+  </div>
+</footer>

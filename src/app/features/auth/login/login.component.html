@@ -1,0 +1,150 @@
+<!-- Login Page -->
+<div class="login-page">
+  <!-- Header -->
+  <header class="header">
+    <div class="header__container">
+      <a routerLink="/" class="header__logo" aria-label="HouseMate Home">
+        <div class="header__logo-icon">
+          <span>H</span>
+        </div>
+        <span class="header__logo-text">HouseMate</span>
+      </a>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="login-content">
+    <!-- Left Section - Form -->
+    <div class="login-form-section">
+      <div class="login-form-wrapper">
+        <!-- Title -->
+        <div class="login-header">
+          <span class="login-header__welcome">Welcome back!</span>
+          <h1 class="login-header__title">LOGIN TO CONTINUE</h1>
+          <p class="login-header__subtitle">
+            To connect with verified, trained home-service experts for ASAP or scheduled
+            services. Fast, transparent, and reliable.
+          </p>
+        </div>
+
+        <!-- Role Dropdown -->
+        <div class="role-dropdown">
+          <button 
+            type="button" 
+            class="role-dropdown__trigger"
+            (click)="toggleDropdown()"
+            [class.active]="isDropdownOpen"
+            aria-haspopup="listbox"
+            [attr.aria-expanded]="isDropdownOpen"
+          >
+            <span>{{ selectedRole === 'customer' ? 'Customer Login' : 'Expert Login' }}</span>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" [class.rotated]="isDropdownOpen">
+              <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+          
+          @if (isDropdownOpen) {
+            <ul class="role-dropdown__menu" role="listbox">
+              <li 
+                role="option"
+                [class.selected]="selectedRole === 'customer'"
+                (click)="selectRole('customer')"
+              >
+                Customer Login
+              </li>
+              <li 
+                role="option"
+                [class.selected]="selectedRole === 'expert'"
+                (click)="selectRole('expert')"
+              >
+                Expert Login
+              </li>
+            </ul>
+          }
+        </div>
+
+        <!-- Login Form -->
+        <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form">
+          <!-- Email Field -->
+          <div class="form-group">
+            <label for="email" class="form-label">Email</label>
+            <input
+              type="email"
+              id="email"
+              formControlName="email"
+              class="form-input"
+              placeholder="john@example.com"
+              autocomplete="email"
+            />
+          </div>
+
+          <!-- Password Field -->
+          <div class="form-group">
+            <label for="password" class="form-label">Password</label>
+            <input
+              type="password"
+              id="password"
+              formControlName="password"
+              class="form-input"
+              placeholder="Password"
+              autocomplete="current-password"
+            />
+            <span class="form-hint">Demo: john&#64;example.com / password123</span>
+          </div>
+
+          <!-- Error Message -->
+          @if (errorMessage()) {
+            <div class="error-message">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                <path d="M12 8V12M12 16H12.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+              {{ errorMessage() }}
+            </div>
+          }
+
+          <!-- Submit Button -->
+          <button type="submit" class="btn-login" [disabled]="isLoading() || loginForm.invalid">
+            @if (isLoading()) {
+              <span class="spinner"></span>
+              Logging in...
+            } @else {
+              LOGIN
+            }
+          </button>
+        </form>
+
+        <!-- Register Link -->
+        <div class="login-footer">
+          <p class="login-footer__register">
+            Don't have an account? 
+            <a [routerLink]="getRegisterLink()" class="link-register">Register here</a>
+          </p>
+          <a routerLink="/" class="link-home">Back to home</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Section - Image -->
+    <div class="login-image-section">
+      <!-- Decorative lines -->
+      <div class="decorative-lines"></div>
+      
+      <!-- Image placeholder -->
+      <div class="login-image-wrapper">
+        <img 
+          src="assets/download.png" 
+          alt="Cleaning supplies illustration"
+          class="login-image"
+          onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+        />
+        <div class="login-image-placeholder" style="display: none;">
+          <svg width="80" height="80" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M4 16L8.586 11.414C9.367 10.633 10.633 10.633 11.414 11.414L16 16M14 14L15.586 12.414C16.367 11.633 17.633 11.633 18.414 12.414L20 14M14 8H14.01M6 20H18C19.105 20 20 19.105 20 18V6C20 4.895 19.105 4 18 4H6C4.895 4 4 4.895 4 6V18C4 19.105 4.895 20 6 20Z" stroke="#0D436B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span>Login Image</span>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
