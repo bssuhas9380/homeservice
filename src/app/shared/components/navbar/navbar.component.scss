@@ -1,0 +1,221 @@
+/* Navbar Component Styles - Matching Figma Exactly */
+
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 72px;
+  background: #FFFFFF;
+  border-bottom: 1px solid #E9EAEB;
+  z-index: 1000;
+  
+  &__container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    max-width: 1280px;
+    height: 100%;
+    margin: 0 auto;
+    padding: 0 32px;
+    
+    @media (max-width: 768px) {
+      padding: 0 16px;
+    }
+  }
+  
+  &__logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    
+    &-icon {
+      width: 36px;
+      height: 36px;
+      background: #0D436B;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      
+      span {
+        color: #FFFFFF;
+        font-family: 'Open Sans', sans-serif;
+        font-size: 20px;
+        font-weight: 700;
+      }
+    }
+    
+    &-text {
+      color: #181D27;
+      font-family: 'Open Sans', sans-serif;
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+  }
+  
+  &__nav {
+    display: flex;
+    align-items: center;
+    gap: 32px;
+    
+    @media (max-width: 768px) {
+      gap: 16px;
+    }
+    
+    &-link {
+      color: #535862;
+      font-family: 'Open Sans', sans-serif;
+      font-size: 14px;
+      font-weight: 500;
+      text-decoration: none;
+      padding: 8px 4px;
+      transition: color 0.2s ease;
+      
+      &:hover {
+        color: #181D27;
+      }
+      
+      &.active {
+        color: #0D436B;
+        font-weight: 600;
+      }
+    }
+  }
+}
+
+/* User Menu */
+.user-menu {
+  position: relative;
+  
+  &__trigger {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 12px 6px 6px;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 100px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    
+    &:hover {
+      background: #F5F5F5;
+    }
+  }
+  
+  &__avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    overflow: hidden;
+    background: #E9EAEB;
+    
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+  }
+  
+  &__name {
+    color: #181D27;
+    font-family: 'Open Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    
+    @media (max-width: 600px) {
+      display: none;
+    }
+  }
+  
+  &__arrow {
+    color: #535862;
+    transition: transform 0.2s ease;
+    
+    &.rotated {
+      transform: rotate(180deg);
+    }
+  }
+  
+  &__dropdown {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    min-width: 200px;
+    background: #FFFFFF;
+    border-radius: 12px;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12);
+    border: 1px solid #E9EAEB;
+    overflow: hidden;
+    animation: dropdownSlide 0.2s ease;
+    z-index: 1001;
+  }
+  
+  &__item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 12px 16px;
+    background: transparent;
+    border: none;
+    color: #535862;
+    font-family: 'Open Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 400;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: left;
+    
+    svg {
+      color: #717680;
+    }
+    
+    &:hover {
+      background: #F5F9FB;
+      color: #181D27;
+      
+      svg {
+        color: #0D436B;
+      }
+    }
+    
+    &--logout {
+      color: #DC2626;
+      
+      svg {
+        color: #DC2626;
+      }
+      
+      &:hover {
+        background: #FEF2F2;
+        color: #DC2626;
+        
+        svg {
+          color: #DC2626;
+        }
+      }
+    }
+  }
+  
+  &__divider {
+    height: 1px;
+    background: #E9EAEB;
+    margin: 4px 0;
+  }
+}
+
+@keyframes dropdownSlide {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

@@ -1,107 +1,144 @@
 import { Component, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router, RouterLink, ActivatedRoute } from '@angular/router';
+import { RouterLink, Router } from '@angular/router';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { AuthService } from '../../../core/services/auth.service';
-import { BookingService, Service, ExpertListing, Address, Coupon, BookingStatus, PaymentStatus } from '../../../core/services/booking.service';
+import { BookingService, BookingStatus, PaymentStatus, Service, Booking } from '../../../core/services/booking.service';
+import { NavbarComponent } from '../../../shared/components/navbar/navbar.component';
+import { PaymentModalComponent } from '../../../shared/components/payment-modal/payment-modal.component';
+import { PaymentSuccessModalComponent } from '../../../shared/components/payment-success-modal/payment-success-modal.component';
 
-interface TimeSlot {
-  value: string;
+interface Expert {
+  id: string;
+  name: string;
+  photo?: string;
+  rating: number;
+  totalRatings: number;
+  experience: number;
+  skills: string[];
+  languages: string[];
+  hourlyRate: number;
+  isVerified: boolean;
+  distance?: number;
+}
+
+interface Address {
+  id: string;
   label: string;
+  houseType: string;
+  line1: string;
+  city: string;
+  state: string;
+  pincode: string;
+  contactName: string;
+  contactNumber: string;
+}
+
+interface Coupon {
+  id: string;
+  code: string;
+  description: string;
+  discountType: string;
+  discountValue: number;
+  minOrderValue: number;
+  maxDiscount?: number;
 }
 
 @Component({
   selector: 'app-book-service',
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule, ReactiveFormsModule],
+  imports: [CommonModule, RouterLink, FormsModule, ReactiveFormsModule, NavbarComponent, PaymentModalComponent, PaymentSuccessModalComponent],
   templateUrl: './book-service.component.html',
   styleUrl: './book-service.component.scss'
 })
 export class BookServiceComponent implements OnInit {
-  // Current step (1: Service & Expert, 2: Date & Time, 3: Address, 4: Summary)
-  currentStep = signal<number>(1);
+  // Signals for state management
+  currentStep = signal(1);
+  isUserMenuOpen = signal(false);
   
-  // Services
+  // Step 1: Service & Expert
   services = signal<Service[]>([]);
   selectedServiceId = signal<string | null>(null);
-  
-  // Experts
-  experts = signal<ExpertListing[]>([]);
-  selectedExpert = signal<ExpertListing | null>(null);
-  isLoadingExperts = signal<boolean>(false);
-  
-  // Date & Time
+  experts = signal<Expert[]>([]);
+  selectedExpert = signal<Expert | null>(null);
+  isLoadingExperts = signal(false);
+
+  // Step 2: Date & Time
+  currentMonth = signal(new Date());
   selectedDate = signal<Date | null>(null);
   selectedTimeSlot = signal<string | null>(null);
-  bookingFrequency = signal<'once' | 'weekly' | 'monthly'>('once');
-  currentMonth = signal<Date>(new Date());
-  
-  // Addresses
+  bookingFrequency = 'Once'; // Using regular property for ngModel binding
+
+  timeSlots = [
+    { label: '6:00 AM - 9:00 AM', value: '06:00-09:00' },
+    { label: '9:00 AM - 12:00 PM', value: '09:00-12:00' },
+    { label: '12:00 PM - 3:00 PM', value: '12:00-15:00' },
+    { label: '3:00 PM - 6:00 PM', value: '15:00-18:00' },
+    { label: '6:00 PM - 9:00 PM', value: '18:00-21:00' }
+  ];
+
+  // Step 3: Address
   addresses = signal<Address[]>([]);
   selectedAddressId = signal<string | null>(null);
-  isAddingNewAddress = signal<boolean>(false);
+  isAddingNewAddress = signal(false);
   newAddressForm: FormGroup;
-  
-  // Coupons
+  selectedHouseType = signal<string>('2 BHK');
+  selectedLocationType = signal<string>('Home');
+
+  houseTypes = ['1 BHK', '2 BHK', '3 BHK', '4 BHK'];
+  locationTypes = ['Home', 'Office', 'Others'];
+
+  // Step 4: Summary & Coupons
   coupons = signal<Coupon[]>([]);
   selectedCoupon = signal<Coupon | null>(null);
-  couponCode = signal<string>('');
-  appliedDiscount = signal<number>(0);
-  
+  couponCode = '';
+
   // Payment
-  isPaymentModalOpen = signal<boolean>(false);
+  isPaymentModalOpen = signal(false);
+  isPaymentSuccess = signal(false);
+  isProcessingPayment = signal(false);
   selectedPaymentMethod = signal<'card' | 'upi' | 'netbanking'>('card');
-  isProcessingPayment = signal<boolean>(false);
-  isPaymentSuccess = signal<boolean>(false);
+
+  // Computed
+  userName = computed(() => this.authService.currentUser()?.name || 'User');
   
-  // User dropdown
-  isUserMenuOpen = signal<boolean>(false);
-  
-  // Computed values
   selectedService = computed(() => {
+    const services = this.services();
     const id = this.selectedServiceId();
-    return this.services().find(s => s.id === id || s.name.toLowerCase() === id?.toLowerCase()) || null;
+    return services.find(s => s.id === id);
   });
-  
+
   selectedAddress = computed(() => {
+    const addresses = this.addresses();
     const id = this.selectedAddressId();
-    return this.addresses().find(a => a.id === id) || null;
+    return addresses.find(a => a.id === id);
   });
-  
-  // Pricing
+
   baseAmount = computed(() => {
     const expert = this.selectedExpert();
     return expert ? expert.hourlyRate * 2 : 500; // 2 hours default
   });
-  
+
   gstAmount = computed(() => this.baseAmount() * 0.18);
-  
+
+  appliedDiscount = computed(() => {
+    const coupon = this.selectedCoupon();
+    if (!coupon) return 0;
+    if (coupon.discountType === 'percentage') {
+      const discount = this.baseAmount() * (coupon.discountValue / 100);
+      return coupon.maxDiscount ? Math.min(discount, coupon.maxDiscount) : discount;
+    }
+    return coupon.discountValue;
+  });
+
   totalAmount = computed(() => {
     return this.baseAmount() + this.gstAmount() - this.appliedDiscount();
   });
-  
-  // Time slots
-  timeSlots: TimeSlot[] = [
-    { value: '06:00-09:00', label: '6:00 AM - 9:00 AM' },
-    { value: '09:00-12:00', label: '9:00 AM - 12:00 PM' },
-    { value: '12:00-15:00', label: '12:00 PM - 3:00 PM' },
-    { value: '15:00-18:00', label: '3:00 PM - 6:00 PM' },
-    { value: '18:00-21:00', label: '6:00 PM - 9:00 PM' }
-  ];
-  
-  // House types
-  houseTypes = ['1 BHK', '2 BHK', '3 BHK', '4 BHK'];
-  selectedHouseType = signal<string>('2 BHK');
-  
-  // Location types
-  locationTypes = ['Home', 'Office', 'Others'];
-  selectedLocationType = signal<string>('Home');
 
   constructor(
     private authService: AuthService,
     private bookingService: BookingService,
     private router: Router,
-    private route: ActivatedRoute,
     private fb: FormBuilder
   ) {
     this.newAddressForm = this.fb.group({
@@ -119,116 +156,63 @@ export class BookServiceComponent implements OnInit {
     this.loadServices();
     this.loadAddresses();
     this.loadCoupons();
-    
-    // Check for pre-selected service from query params
-    this.route.queryParams.subscribe(params => {
-      if (params['service']) {
-        this.selectedServiceId.set(params['service']);
-        this.loadExperts();
-      }
-    });
   }
 
-  // Load services
   loadServices(): void {
-    // Hardcoded services for demo
-    this.services.set([
-      { id: 'srv-001', name: 'Cleaning', description: '', icon: '', image: '', basePrice: 150, priceUnit: 'per hour', isPopular: true, isFeatured: false },
-      { id: 'srv-002', name: 'Cooking', description: '', icon: '', image: '', basePrice: 200, priceUnit: 'per hour', isPopular: true, isFeatured: false },
-      { id: 'srv-003', name: 'Gardening', description: '', icon: '', image: '', basePrice: 175, priceUnit: 'per hour', isPopular: true, isFeatured: false },
-      { id: 'srv-004', name: 'Cleaning', description: '', icon: '', image: '', basePrice: 150, priceUnit: 'per hour', isPopular: true, isFeatured: false },
-      { id: 'srv-005', name: 'Gardening', description: '', icon: '', image: '', basePrice: 175, priceUnit: 'per hour', isPopular: true, isFeatured: false },
-      { id: 'srv-006', name: 'Cooking', description: '', icon: '', image: '', basePrice: 200, priceUnit: 'per hour', isPopular: true, isFeatured: false },
-      { id: 'srv-007', name: 'Gardening', description: '', icon: '', image: '', basePrice: 175, priceUnit: 'per hour', isPopular: true, isFeatured: false },
-      { id: 'srv-008', name: 'Cleaning', description: '', icon: '', image: '', basePrice: 150, priceUnit: 'per hour', isPopular: true, isFeatured: false }
-    ]);
-  }
-
-  // Load experts
-  loadExperts(): void {
-    this.isLoadingExperts.set(true);
-    this.bookingService.getAllExperts().subscribe({
-      next: (experts) => {
-        this.experts.set(experts);
-        this.isLoadingExperts.set(false);
-      },
-      error: () => {
-        this.isLoadingExperts.set(false);
+    this.bookingService.getServices().subscribe({
+      next: (services) => {
+        this.services.set(services);
+        if (services.length > 0 && !this.selectedServiceId()) {
+          this.selectService(services[0].id);
+        }
       }
     });
   }
 
-  // Load addresses
   loadAddresses(): void {
-    const user = this.authService.getCurrentUser();
+    const user = this.authService.currentUser();
     if (user) {
       this.bookingService.getCustomerAddresses(user.id).subscribe({
-        next: (addresses) => {
-          this.addresses.set(addresses);
-          if (addresses.length > 0) {
-            this.selectedAddressId.set(addresses[0].id);
-          }
-        }
+        next: (addresses) => this.addresses.set(addresses)
       });
     }
   }
 
-  // Load coupons
   loadCoupons(): void {
     this.bookingService.getAvailableCoupons().subscribe({
-      next: (coupons) => {
-        this.coupons.set(coupons);
-      }
+      next: (coupons) => this.coupons.set(coupons)
     });
   }
 
-  // Select service
   selectService(serviceId: string): void {
     this.selectedServiceId.set(serviceId);
-    this.loadExperts();
+    this.selectedExpert.set(null);
+    this.loadExperts(serviceId);
   }
 
-  // Select expert
-  selectExpert(expert: ExpertListing): void {
+  loadExperts(serviceId: string): void {
+    this.isLoadingExperts.set(true);
+    const service = this.services().find(s => s.id === serviceId);
+    if (service) {
+      this.bookingService.getExpertsByService(service.name).subscribe({
+        next: (experts) => {
+          const mappedExperts: Expert[] = experts.map((e: any) => ({
+            ...e,
+            distance: Math.random() * 5 + 1
+          }));
+          this.experts.set(mappedExperts);
+          this.isLoadingExperts.set(false);
+        },
+        error: () => this.isLoadingExperts.set(false)
+      });
+    }
+  }
+
+  selectExpert(expert: Expert): void {
     this.selectedExpert.set(expert);
   }
 
-  // Check if step is complete
-  isStepComplete(step: number): boolean {
-    switch (step) {
-      case 1:
-        return !!this.selectedServiceId() && !!this.selectedExpert();
-      case 2:
-        return !!this.selectedDate() && !!this.selectedTimeSlot();
-      case 3:
-        return !!this.selectedAddressId();
-      default:
-        return false;
-    }
-  }
-
-  // Next step
-  nextStep(): void {
-    if (this.currentStep() < 4 && this.isStepComplete(this.currentStep())) {
-      this.currentStep.set(this.currentStep() + 1);
-    }
-  }
-
-  // Previous step
-  prevStep(): void {
-    if (this.currentStep() > 1) {
-      this.currentStep.set(this.currentStep() - 1);
-    }
-  }
-
-  // Go to step
-  goToStep(step: number): void {
-    if (step <= this.currentStep() || this.isStepComplete(step - 1)) {
-      this.currentStep.set(step);
-    }
-  }
-
-  // Calendar helpers
+  // Calendar methods
   getDaysInMonth(date: Date): (number | null)[] {
     const year = date.getFullYear();
     const month = date.getMonth();
@@ -236,17 +220,8 @@ export class BookServiceComponent implements OnInit {
     const daysInMonth = new Date(year, month + 1, 0).getDate();
     
     const days: (number | null)[] = [];
-    
-    // Add empty slots for days before first day
-    for (let i = 0; i < firstDay; i++) {
-      days.push(null);
-    }
-    
-    // Add days of month
-    for (let i = 1; i <= daysInMonth; i++) {
-      days.push(i);
-    }
-    
+    for (let i = 0; i < firstDay; i++) days.push(null);
+    for (let i = 1; i <= daysInMonth; i++) days.push(i);
     return days;
   }
 
@@ -265,120 +240,128 @@ export class BookServiceComponent implements OnInit {
     this.currentMonth.set(new Date(current.getFullYear(), current.getMonth() + 1, 1));
   }
 
-  selectDate(day: number, monthOffset: number = 0): void {
-    const baseDate = monthOffset === 0 ? this.currentMonth() : this.getNextMonth();
-    const selectedDate = new Date(baseDate.getFullYear(), baseDate.getMonth(), day);
-    
-    // Don't allow past dates
-    if (selectedDate >= new Date(new Date().setHours(0, 0, 0, 0))) {
-      this.selectedDate.set(selectedDate);
-    }
+  selectDate(day: number, monthOffset: number): void {
+    const baseMonth = monthOffset === 0 ? this.currentMonth() : this.getNextMonth();
+    const date = new Date(baseMonth.getFullYear(), baseMonth.getMonth(), day);
+    this.selectedDate.set(date);
   }
 
-  isDateSelected(day: number, monthOffset: number = 0): boolean {
+  isDateSelected(day: number, monthOffset: number): boolean {
     const selected = this.selectedDate();
-    if (!selected || !day) return false;
-    
-    const baseDate = monthOffset === 0 ? this.currentMonth() : this.getNextMonth();
-    return selected.getDate() === day &&
-           selected.getMonth() === baseDate.getMonth() &&
-           selected.getFullYear() === baseDate.getFullYear();
+    if (!selected) return false;
+    const baseMonth = monthOffset === 0 ? this.currentMonth() : this.getNextMonth();
+    return selected.getDate() === day && 
+           selected.getMonth() === baseMonth.getMonth() && 
+           selected.getFullYear() === baseMonth.getFullYear();
   }
 
-  isToday(day: number, monthOffset: number = 0): boolean {
-    if (!day) return false;
+  isToday(day: number, monthOffset: number): boolean {
     const today = new Date();
-    const baseDate = monthOffset === 0 ? this.currentMonth() : this.getNextMonth();
-    return today.getDate() === day &&
-           today.getMonth() === baseDate.getMonth() &&
-           today.getFullYear() === baseDate.getFullYear();
+    const baseMonth = monthOffset === 0 ? this.currentMonth() : this.getNextMonth();
+    return today.getDate() === day && 
+           today.getMonth() === baseMonth.getMonth() && 
+           today.getFullYear() === baseMonth.getFullYear();
   }
 
-  isPastDate(day: number, monthOffset: number = 0): boolean {
-    if (!day) return false;
-    const baseDate = monthOffset === 0 ? this.currentMonth() : this.getNextMonth();
-    const date = new Date(baseDate.getFullYear(), baseDate.getMonth(), day);
-    const today = new Date(new Date().setHours(0, 0, 0, 0));
+  isPastDate(day: number, monthOffset: number): boolean {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const baseMonth = monthOffset === 0 ? this.currentMonth() : this.getNextMonth();
+    const date = new Date(baseMonth.getFullYear(), baseMonth.getMonth(), day);
     return date < today;
   }
 
-  // Select time slot
   selectTimeSlot(slot: string): void {
     this.selectedTimeSlot.set(slot);
   }
 
-  // Select address
+  // Address methods
   selectAddress(addressId: string): void {
     this.selectedAddressId.set(addressId);
-    this.isAddingNewAddress.set(false);
   }
 
-  // Show add address form
   showAddAddressForm(): void {
     this.isAddingNewAddress.set(true);
   }
 
-  // Save new address
+  cancelAddAddress(): void {
+    this.isAddingNewAddress.set(false);
+    this.newAddressForm.reset();
+  }
+
   saveNewAddress(): void {
     if (this.newAddressForm.valid) {
-      const user = this.authService.getCurrentUser();
-      if (!user) return;
-
-      const newAddress = {
-        userId: user.id,
-        label: this.selectedLocationType(),
-        houseType: this.selectedHouseType(),
-        locationType: this.selectedLocationType(),
-        ...this.newAddressForm.value
-      };
-
-      this.bookingService.addAddress(newAddress).subscribe({
-        next: (address) => {
-          this.addresses.update(addrs => [...addrs, address]);
-          this.selectedAddressId.set(address.id);
-          this.isAddingNewAddress.set(false);
-          this.newAddressForm.reset();
-        }
-      });
-    }
-  }
-
-  // Apply coupon
-  applyCoupon(): void {
-    const code = this.couponCode();
-    if (!code) return;
-
-    this.bookingService.applyCoupon(code, this.baseAmount()).subscribe({
-      next: (result) => {
-        if (result) {
-          this.selectedCoupon.set(result.coupon);
-          this.appliedDiscount.set(result.discount);
-        } else {
-          alert('Invalid or ineligible coupon code');
-        }
+      const user = this.authService.currentUser();
+      if (user) {
+        const newAddress = {
+          ...this.newAddressForm.value,
+          userId: user.id,
+          label: this.selectedLocationType(),
+          houseType: this.selectedHouseType(),
+          locationType: this.selectedLocationType()
+        };
+        
+        this.bookingService.addAddress(newAddress).subscribe({
+          next: (address) => {
+            this.addresses.set([...this.addresses(), address]);
+            this.selectedAddressId.set(address.id);
+            this.isAddingNewAddress.set(false);
+            this.newAddressForm.reset();
+          }
+        });
       }
-    });
-  }
-
-  // Select coupon from list
-  selectCouponFromList(coupon: Coupon): void {
-    if (this.baseAmount() >= coupon.minOrderValue) {
-      this.couponCode.set(coupon.code);
-      this.applyCoupon();
     }
   }
 
-  // Check if coupon is eligible
+  // Coupon methods
   isCouponEligible(coupon: Coupon): boolean {
     return this.baseAmount() >= coupon.minOrderValue;
   }
 
-  // Open payment modal
-  openPaymentModal(): void {
-    this.isPaymentModalOpen.set(true);
+  selectCouponFromList(coupon: Coupon): void {
+    if (this.isCouponEligible(coupon)) {
+      this.selectedCoupon.set(coupon);
+      this.couponCode = coupon.code;
+    }
   }
 
-  // Close payment modal
+  applyCoupon(): void {
+    if (!this.couponCode) return;
+    const coupon = this.coupons().find(c => c.code.toLowerCase() === this.couponCode.toLowerCase());
+    if (coupon && this.isCouponEligible(coupon)) {
+      this.selectedCoupon.set(coupon);
+    }
+  }
+
+  // Navigation
+  isStepComplete(step: number): boolean {
+    switch (step) {
+      case 1: return !!this.selectedServiceId() && !!this.selectedExpert();
+      case 2: return !!this.selectedDate() && !!this.selectedTimeSlot();
+      case 3: return !!this.selectedAddressId();
+      case 4: return true;
+      default: return false;
+    }
+  }
+
+  nextStep(): void {
+    if (this.currentStep() < 4 && this.isStepComplete(this.currentStep())) {
+      this.currentStep.set(this.currentStep() + 1);
+    }
+  }
+
+  goToStep(step: number): void {
+    if (step <= this.currentStep() || this.isStepComplete(step - 1)) {
+      this.currentStep.set(step);
+    }
+  }
+
+  // Payment
+  openPaymentModal(): void {
+    this.isPaymentModalOpen.set(true);
+    this.isPaymentSuccess.set(false);
+  }
+
   closePaymentModal(): void {
     this.isPaymentModalOpen.set(false);
     if (this.isPaymentSuccess()) {
@@ -386,17 +369,14 @@ export class BookServiceComponent implements OnInit {
     }
   }
 
-  // Process payment
   processPayment(): void {
     this.isProcessingPayment.set(true);
     
-    // Simulate payment processing
     setTimeout(() => {
-      const user = this.authService.getCurrentUser();
+      const user = this.authService.currentUser();
       if (!user) return;
 
-      // Create booking
-      const bookingData = {
+      const bookingData: Partial<Booking> = {
         customerId: user.id,
         expertId: this.selectedExpert()?.id,
         serviceId: this.selectedServiceId() || undefined,
@@ -405,7 +385,7 @@ export class BookServiceComponent implements OnInit {
         date: this.selectedDate()?.toISOString(),
         timeSlot: this.selectedTimeSlot() || undefined,
         duration: 2,
-        frequency: this.bookingFrequency(),
+        frequency: this.bookingFrequency.toLowerCase() as 'once' | 'weekly' | 'monthly',
         baseAmount: this.baseAmount(),
         gstAmount: this.gstAmount(),
         discountAmount: this.appliedDiscount(),
@@ -428,28 +408,22 @@ export class BookServiceComponent implements OnInit {
     }, 2000);
   }
 
-  // Toggle user menu
+  // Helpers
+  formatDate(date: Date | null): string {
+    if (!date) return '';
+    return date.toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
+  }
+
+  getTimeSlotLabel(value: string | null): string {
+    const slot = this.timeSlots.find(s => s.value === value);
+    return slot ? slot.label : '';
+  }
+
   toggleUserMenu(): void {
     this.isUserMenuOpen.set(!this.isUserMenuOpen());
   }
 
-  // Logout
   logout(): void {
     this.authService.logout();
-  }
-
-  // Get user name
-  get userName(): string {
-    return this.authService.getCurrentUser()?.name || 'User';
-  }
-
-  // Format date for display
-  formatDate(date: Date | null): string {
-    if (!date) return '';
-    return date.toLocaleDateString('en-IN', { 
-      day: 'numeric', 
-      month: 'long', 
-      year: 'numeric' 
-    });
   }
 }

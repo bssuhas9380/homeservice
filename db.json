@@ -41,11 +41,17 @@
         "city": "Pune",
         "area": "Kharadi"
       },
-      "skills": ["Cooking", "Cleaning"],
+      "skills": [
+        "Cooking",
+        "Cleaning"
+      ],
       "experience": 8,
       "rating": 4.7,
       "totalRatings": 122,
-      "languages": ["Hindi", "English"],
+      "languages": [
+        "Hindi",
+        "English"
+      ],
       "hourlyRate": 299,
       "isVerified": true,
       "isOnline": true,
@@ -64,11 +70,19 @@
         "city": "Pune",
         "area": "Wagholi"
       },
-      "skills": ["Cleaning", "Gardening", "Electrician"],
+      "skills": [
+        "Cleaning",
+        "Gardening",
+        "Electrician"
+      ],
       "experience": 10,
       "rating": 4.8,
       "totalRatings": 256,
-      "languages": ["Hindi", "English", "Marathi"],
+      "languages": [
+        "Hindi",
+        "English",
+        "Marathi"
+      ],
       "hourlyRate": 350,
       "isVerified": true,
       "isOnline": true,
@@ -87,11 +101,17 @@
         "city": "Pune",
         "area": "Viman Nagar"
       },
-      "skills": ["Cooking", "Baby Sitting"],
+      "skills": [
+        "Cooking",
+        "Baby Sitting"
+      ],
       "experience": 5,
       "rating": 4.5,
       "totalRatings": 89,
-      "languages": ["Hindi", "English"],
+      "languages": [
+        "Hindi",
+        "English"
+      ],
       "hourlyRate": 275,
       "isVerified": true,
       "isOnline": false,
@@ -110,11 +130,19 @@
         "city": "Pune",
         "area": "Hadapsar"
       },
-      "skills": ["Plumbing", "Electrician", "Carpentry"],
+      "skills": [
+        "Plumbing",
+        "Electrician",
+        "Carpentry"
+      ],
       "experience": 7,
       "rating": 4.6,
       "totalRatings": 178,
-      "languages": ["Hindi", "Gujarati", "English"],
+      "languages": [
+        "Hindi",
+        "Gujarati",
+        "English"
+      ],
       "hourlyRate": 325,
       "isVerified": true,
       "isOnline": true,
@@ -260,7 +288,48 @@
       "contactNumber": "9876543220"
     }
   ],
-  "bookings": [],
+  "bookings": [
+    {
+      "id": "book-1770753818316",
+      "customerId": "cust-001",
+      "expertId": "exp-002",
+      "serviceId": "srv-005",
+      "serviceName": "Electrician",
+      "addressId": "addr-002",
+      "date": "2026-02-19T18:30:00.000Z",
+      "timeSlot": "06:00-09:00",
+      "duration": 2,
+      "frequency": "once",
+      "baseAmount": 700,
+      "gstAmount": 126,
+      "discountAmount": 100,
+      "totalAmount": 726,
+      "couponCode": "FIRST50",
+      "status": "PENDING",
+      "paymentStatus": "PENDING",
+      "createdAt": "2026-02-10T20:03:38.316Z"
+    },
+    {
+      "id": "book-1770755243669",
+      "customerId": "cust-001",
+      "expertId": "exp-001",
+      "serviceId": "srv-002",
+      "serviceName": "Cooking",
+      "addressId": "addr-002",
+      "date": "2026-03-04T18:30:00.000Z",
+      "timeSlot": "06:00-09:00",
+      "duration": 2,
+      "frequency": "once",
+      "baseAmount": 598,
+      "gstAmount": 107.64,
+      "discountAmount": 100,
+      "totalAmount": 605.64,
+      "couponCode": "FIRST50",
+      "status": "PENDING",
+      "paymentStatus": "PENDING",
+      "createdAt": "2026-02-10T20:27:23.669Z"
+    }
+  ],
   "coupons": [
     {
       "id": "coup-001",

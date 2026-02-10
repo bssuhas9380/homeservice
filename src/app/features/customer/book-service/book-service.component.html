@@ -1,37 +1,7 @@
 <!-- Book Service Page -->
 <div class="book-service-page">
-  <!-- Header -->
-  <header class="header">
-    <div class="header__container">
-      <a routerLink="/" class="header__logo">
-        <div class="header__logo-icon"><span>H</span></div>
-        <span class="header__logo-text">HouseMate</span>
-      </a>
-      
-      <nav class="header__nav">
-        <a routerLink="/customer/services" class="header__nav-link">Services</a>
-        <a routerLink="/customer/bookings" class="header__nav-link">My Bookings</a>
-        
-        <div class="user-menu">
-          <button class="user-menu__trigger" (click)="toggleUserMenu()">
-            <div class="user-menu__avatar">
-              <img src="assets/images/default-avatar.png" alt="User" />
-            </div>
-            <span class="user-menu__name">{{ userName }}</span>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" [class.rotated]="isUserMenuOpen()">
-              <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-            </svg>
-          </button>
-          @if (isUserMenuOpen()) {
-            <div class="user-menu__dropdown">
-              <a routerLink="/customer/profile" class="user-menu__item">My Profile</a>
-              <button class="user-menu__item user-menu__item--logout" (click)="logout()">Logout</button>
-            </div>
-          }
-        </div>
-      </nav>
-    </div>
-  </header>
+  <!-- Shared Navbar -->
+  <app-navbar [pageType]="'customer'" />
 
   <!-- Main Content -->
   <main class="main-content">
@@ -41,12 +11,12 @@
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
         <path d="M9 18L15 12L9 6" stroke="currentColor" stroke-width="2"/>
       </svg>
-      <span class="active">Book a Service</span>
+      <span class="breadcrumb__active">Book a Service</span>
       @if (isAddingNewAddress()) {
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
           <path d="M9 18L15 12L9 6" stroke="currentColor" stroke-width="2"/>
         </svg>
-        <span class="active">Add New Address</span>
+        <span class="breadcrumb__active">Add New Address</span>
       }
     </nav>
 
@@ -64,57 +34,17 @@
       </button>
     </div>
 
-    <!-- Step Indicators -->
-    <div class="step-indicators">
-      <button class="step-indicator" [class.active]="currentStep() === 1" [class.completed]="currentStep() > 1" (click)="goToStep(1)">
-        <span>Select Service</span>
-        @if (currentStep() > 1) {
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" class="check-icon">
-            <path d="M5 12L10 17L20 7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-          </svg>
-        } @else {
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-            <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2"/>
-          </svg>
-        }
-      </button>
-      
-      <button class="step-indicator" [class.active]="currentStep() === 2" [class.completed]="currentStep() > 2" (click)="goToStep(2)">
-        <span>Select Date & Time</span>
-        @if (currentStep() > 2) {
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" class="check-icon">
-            <path d="M5 12L10 17L20 7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-          </svg>
-        } @else {
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-            <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2"/>
-          </svg>
-        }
-      </button>
-      
-      <button class="step-indicator" [class.active]="currentStep() >= 3" [class.completed]="currentStep() > 3" (click)="goToStep(3)">
-        <span>Address Details</span>
-        @if (currentStep() > 3) {
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" class="check-icon">
-            <path d="M5 12L10 17L20 7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-          </svg>
-        }
-      </button>
-    </div>
-
-    <!-- Step 1: Select Service & Expert -->
+    <!-- Step 1: Select Service -->
     @if (currentStep() === 1) {
       <div class="step-content">
-        <!-- Services Grid -->
+        <!-- Services Selection -->
         <section class="services-section">
           <h3 class="section-label">Select Service</h3>
-          <div class="services-grid">
-            @for (service of services(); track service.id + $index) {
+          <div class="services-scroll">
+            @for (service of services(); track service.id) {
               <button class="service-card" [class.selected]="selectedServiceId() === service.id" (click)="selectService(service.id)">
                 <div class="service-card__icon">
-                  <svg width="40" height="40" viewBox="0 0 24 24" fill="none">
-                    <path d="M3 9L12 2L21 9V20C21 20.5304 20.7893 21.0391 20.4142 21.4142C20.0391 21.7893 19.5304 22 19 22H5C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20V9Z" stroke="currentColor" stroke-width="2"/>
-                  </svg>
+                  <img [src]="service.icon || 'assets/images/services/default-icon.png'" [alt]="service.name" />
                 </div>
                 <span class="service-card__name">{{ service.name }}</span>
               </button>
@@ -122,10 +52,10 @@
           </div>
         </section>
 
-        <!-- Experts List -->
+        <!-- Experts Section -->
         <section class="experts-section">
           <div class="experts-header">
-            <h3 class="section-label">Available Expert Near You</h3>
+            <h3 class="section-label section-label--teal">Available Expert Near You</h3>
             <div class="experts-actions">
               <button class="icon-btn">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
@@ -154,11 +84,11 @@
                     <img [src]="expert.photo || 'assets/images/default-avatar.png'" [alt]="expert.name" />
                   </div>
                   <div class="expert-card__info">
-                    <div class="expert-card__header">
+                    <div class="expert-card__row">
                       <h4 class="expert-card__name">{{ expert.name }}</h4>
                       @if (expert.isVerified) {
                         <span class="verified-badge">
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none">
                             <path d="M5 12L10 17L20 7" stroke="currentColor" stroke-width="3"/>
                           </svg>
                           Verified
@@ -167,23 +97,23 @@
                       <span class="expert-card__rate">₹{{ expert.hourlyRate }}/hr</span>
                     </div>
                     <div class="expert-card__meta">
-                      <span>
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" stroke="currentColor" stroke-width="2"/>
+                      <span class="meta-item">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" fill="#FFC107"/>
                         </svg>
                         {{ expert.rating }} ({{ expert.totalRatings }}),
                       </span>
-                      <span>
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                      <span class="meta-item">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
                           <rect x="2" y="7" width="20" height="14" rx="2" stroke="currentColor" stroke-width="2"/>
-                          <path d="M16 7V5C16 3.89543 15.1046 3 14 3H10C8.89543 3 8 3.89543 8 5V7" stroke="currentColor" stroke-width="2"/>
+                          <path d="M16 7V5C16 3.9 15.1 3 14 3H10C8.9 3 8 3.9 8 5V7" stroke="currentColor" stroke-width="2"/>
                         </svg>
                         {{ expert.experience }} years experience
                       </span>
                     </div>
                     <div class="expert-card__location">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                        <path d="M21 10C21 17 12 23 12 23C12 23 3 17 3 10C3 7.61305 3.94821 5.32387 5.63604 3.63604C7.32387 1.94821 9.61305 1 12 1C14.3869 1 16.6761 1.94821 18.364 3.63604C20.0518 5.32387 21 7.61305 21 10Z" stroke="currentColor" stroke-width="2"/>
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                        <path d="M21 10C21 17 12 23 12 23C12 23 3 17 3 10C3 5 7 1 12 1C17 1 21 5 21 10Z" stroke="currentColor" stroke-width="2"/>
                       </svg>
                       {{ expert.distance?.toFixed(1) }} km away
                     </div>
@@ -203,318 +133,402 @@
       </div>
     }
 
-    <!-- Step 2: Select Date & Time -->
-    @if (currentStep() === 2) {
-      <div class="step-content">
-        <section class="datetime-section">
-          <h3 class="section-label">Select Date & Time</h3>
-          
-          <div class="datetime-container">
-            <!-- Calendar -->
-            <div class="calendar-section">
-              <div class="calendar-header">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                  <rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" stroke-width="2"/>
-                  <path d="M16 2V6M8 2V6M3 10H21" stroke="currentColor" stroke-width="2"/>
-                </svg>
-                <span>Preferred Date</span>
-                <select class="frequency-select" [(ngModel)]="bookingFrequency">
-                  <option value="once">Once</option>
-                  <option value="weekly">Weekly</option>
-                  <option value="monthly">Monthly</option>
-                </select>
-              </div>
-              
-              <div class="calendars">
-                <!-- Current Month -->
-                <div class="calendar">
-                  <div class="calendar__nav">
-                    <button (click)="prevMonth()">
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                        <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2"/>
-                      </svg>
-                    </button>
-                    <span>{{ currentMonth() | date:'MMMM yyyy' }}</span>
-                    <span></span>
-                  </div>
-                  <div class="calendar__weekdays">
-                    <span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span>
-                  </div>
-                  <div class="calendar__days">
-                    @for (day of getDaysInMonth(currentMonth()); track $index) {
-                      @if (day) {
-                        <button 
-                          class="calendar__day"
-                          [class.selected]="isDateSelected(day, 0)"
-                          [class.today]="isToday(day, 0)"
-                          [class.disabled]="isPastDate(day, 0)"
-                          [disabled]="isPastDate(day, 0)"
-                          (click)="selectDate(day, 0)"
-                        >{{ day }}</button>
-                      } @else {
-                        <span class="calendar__day--empty"></span>
-                      }
-                    }
-                  </div>
-                </div>
-
-                <!-- Next Month -->
-                <div class="calendar">
-                  <div class="calendar__nav">
-                    <span></span>
-                    <span>{{ getNextMonth() | date:'MMMM yyyy' }}</span>
-                    <button (click)="nextMonth()">
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                        <path d="M9 18L15 12L9 6" stroke="currentColor" stroke-width="2"/>
-                      </svg>
-                    </button>
-                  </div>
-                  <div class="calendar__weekdays">
-                    <span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span>
-                  </div>
-                  <div class="calendar__days">
-                    @for (day of getDaysInMonth(getNextMonth()); track $index) {
-                      @if (day) {
-                        <button 
-                          class="calendar__day"
-                          [class.selected]="isDateSelected(day, 1)"
-                          [class.today]="isToday(day, 1)"
-                          (click)="selectDate(day, 1)"
-                        >{{ day }}</button>
-                      } @else {
-                        <span class="calendar__day--empty"></span>
-                      }
-                    }
-                  </div>
-                </div>
-              </div>
+    <!-- Step 2 & beyond: Show accordion steps -->
+    @if (currentStep() >= 2) {
+      <div class="steps-accordion">
+        <!-- Step 1 Accordion - Select Service -->
+        <div class="accordion-step" [class.completed]="currentStep() > 1">
+          <div class="accordion-step__header" (click)="goToStep(1)">
+            <div class="accordion-step__title">
+              <span>Select Service</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" class="chevron">
+                <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2"/>
+              </svg>
             </div>
-
-            <!-- Time Slots -->
-            <div class="timeslots-section">
-              <div class="timeslots-header">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                  <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
-                  <path d="M12 6V12L16 14" stroke="currentColor" stroke-width="2"/>
-                </svg>
-                <span>Preferred Time Slot</span>
-              </div>
-              <div class="timeslots-grid">
-                @for (slot of timeSlots; track slot.value) {
-                  <button 
-                    class="timeslot"
-                    [class.selected]="selectedTimeSlot() === slot.value"
-                    (click)="selectTimeSlot(slot.value)"
-                  >{{ slot.label }}</button>
-                }
-              </div>
-            </div>
-          </div>
-        </section>
-      </div>
-    }
-
-    <!-- Step 3: Address Details -->
-    @if (currentStep() === 3 && !isAddingNewAddress()) {
-      <div class="step-content">
-        <section class="address-section">
-          <h3 class="section-label">Address Details</h3>
-          
-          <div class="addresses-list">
-            @for (address of addresses(); track address.id) {
-              <button 
-                class="address-card"
-                [class.selected]="selectedAddressId() === address.id"
-                (click)="selectAddress(address.id)"
-              >
-                <div class="address-card__icon">
-                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
-                    <path d="M21 10C21 17 12 23 12 23C12 23 3 17 3 10C3 7.61305 3.94821 5.32387 5.63604 3.63604C7.32387 1.94821 9.61305 1 12 1C14.3869 1 16.6761 1.94821 18.364 3.63604C20.0518 5.32387 21 7.61305 21 10Z" stroke="#DC2626" stroke-width="2"/>
-                    <circle cx="12" cy="10" r="3" fill="#DC2626"/>
-                  </svg>
-                </div>
-                <div class="address-card__content">
-                  <div class="address-card__header">
-                    <h4>{{ address.label }}</h4>
-                    <span class="address-card__type">{{ address.houseType }}</span>
-                  </div>
-                  <p class="address-card__line">{{ address.line1 }}</p>
-                  <p class="address-card__city">{{ address.city }}, {{ address.state }} - {{ address.pincode }} &nbsp;•&nbsp; +91 {{ address.contactNumber }}</p>
-                </div>
-              </button>
+            @if (currentStep() > 1) {
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" class="check-icon">
+                <circle cx="12" cy="12" r="11" fill="#10B981"/>
+                <path d="M8 12L11 15L16 9" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
             }
           </div>
+        </div>
 
-          <button class="btn-add-address" (click)="showAddAddressForm()">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-              <path d="M12 5V19M5 12H19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-            </svg>
-            Add New Address
-          </button>
-        </section>
-      </div>
-    }
-
-    <!-- Add New Address Form -->
-    @if (currentStep() === 3 && isAddingNewAddress()) {
-      <div class="step-content">
-        <section class="new-address-section">
-          <div class="new-address-header">
-            <h3 class="section-label">Address Details</h3>
-            <button class="btn-save-address" (click)="saveNewAddress()" [disabled]="!newAddressForm.valid">Save New Address</button>
+        <!-- Step 2 Accordion - Select Date & Time -->
+        <div class="accordion-step" [class.active]="currentStep() === 2" [class.completed]="currentStep() > 2">
+          <div class="accordion-step__header" (click)="goToStep(2)">
+            <div class="accordion-step__title">
+              <span>Select Date & Time</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" class="chevron">
+                <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2"/>
+              </svg>
+            </div>
+            @if (currentStep() > 2) {
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" class="check-icon">
+                <circle cx="12" cy="12" r="11" fill="#10B981"/>
+                <path d="M8 12L11 15L16 9" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            }
           </div>
+          
+          @if (currentStep() === 2) {
+            <div class="accordion-step__content">
+              <div class="datetime-container">
+                <!-- Calendar Section -->
+                <div class="calendar-section">
+                  <div class="calendar-header">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                      <rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" stroke-width="2"/>
+                      <path d="M16 2V6M8 2V6M3 10H21" stroke="currentColor" stroke-width="2"/>
+                    </svg>
+                    <span>Preferred Date</span>
+                    <select class="frequency-select" [(ngModel)]="bookingFrequency">
+                      <option value="Once">Once</option>
+                      <option value="Weekly">Weekly</option>
+                      <option value="Monthly">Monthly</option>
+                    </select>
+                  </div>
+                  
+                  <div class="calendars">
+                    <!-- Current Month -->
+                    <div class="calendar">
+                      <div class="calendar__nav">
+                        <button (click)="prevMonth()">
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                            <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2"/>
+                          </svg>
+                        </button>
+                        <span>{{ currentMonth() | date:'MMMM yyyy' }}</span>
+                        <span></span>
+                      </div>
+                      <div class="calendar__weekdays">
+                        <span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span>
+                      </div>
+                      <div class="calendar__days">
+                        @for (day of getDaysInMonth(currentMonth()); track $index) {
+                          @if (day) {
+                            <button 
+                              class="calendar__day"
+                              [class.selected]="isDateSelected(day, 0)"
+                              [class.today]="isToday(day, 0)"
+                              [class.disabled]="isPastDate(day, 0)"
+                              [disabled]="isPastDate(day, 0)"
+                              (click)="selectDate(day, 0)"
+                            >{{ day }}</button>
+                          } @else {
+                            <span class="calendar__day--empty"></span>
+                          }
+                        }
+                      </div>
+                    </div>
 
-          <form [formGroup]="newAddressForm" class="address-form">
-            <div class="form-group full-width">
-              <label class="form-label">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                  <path d="M3 9L12 2L21 9V20C21 20.5304 20.7893 21.0391 20.4142 21.4142C20.0391 21.7893 19.5304 22 19 22H5C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20V9Z" stroke="currentColor" stroke-width="2"/>
-                </svg>
-                Service Address <span class="required">*</span>
-              </label>
-              <input type="text" formControlName="line1" class="form-input" placeholder="Enter your complete address (House/Flat no., Building, Street, Landmark)" />
-            </div>
+                    <!-- Next Month -->
+                    <div class="calendar">
+                      <div class="calendar__nav">
+                        <span></span>
+                        <span>{{ getNextMonth() | date:'MMMM yyyy' }}</span>
+                        <button (click)="nextMonth()">
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                            <path d="M9 18L15 12L9 6" stroke="currentColor" stroke-width="2"/>
+                          </svg>
+                        </button>
+                      </div>
+                      <div class="calendar__weekdays">
+                        <span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span>
+                      </div>
+                      <div class="calendar__days">
+                        @for (day of getDaysInMonth(getNextMonth()); track $index) {
+                          @if (day) {
+                            <button 
+                              class="calendar__day"
+                              [class.selected]="isDateSelected(day, 1)"
+                              [class.today]="isToday(day, 1)"
+                              (click)="selectDate(day, 1)"
+                            >{{ day }}</button>
+                          } @else {
+                            <span class="calendar__day--empty"></span>
+                          }
+                        }
+                      </div>
+                    </div>
+                  </div>
+                </div>
 
-            <div class="form-row">
-              <div class="form-group">
-                <label class="form-label">City <span class="required">*</span></label>
-                <input type="text" formControlName="city" class="form-input" placeholder="e.g., Mumbai" />
-              </div>
-              <div class="form-group">
-                <label class="form-label">State <span class="required">*</span></label>
-                <input type="text" formControlName="state" class="form-input" placeholder="e.g., Maharashtra" />
-              </div>
-              <div class="form-group">
-                <label class="form-label">PIN Code <span class="required">*</span></label>
-                <input type="text" formControlName="pincode" class="form-input" placeholder="400001" maxlength="6" />
-              </div>
-            </div>
-
-            <div class="form-row">
-              <div class="form-group">
-                <label class="form-label">Contact Name <span class="required">*</span></label>
-                <input type="text" formControlName="contactName" class="form-input" placeholder="Your full name" />
-              </div>
-              <div class="form-group">
-                <label class="form-label">Contact Number <span class="required">*</span></label>
-                <div class="input-with-prefix">
-                  <span class="input-prefix">+91</span>
-                  <input type="tel" formControlName="contactNumber" class="form-input" placeholder="9876543210" maxlength="10" />
+                <!-- Time Slots Section -->
+                <div class="timeslots-section">
+                  <div class="timeslots-header">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                      <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                      <path d="M12 6V12L16 14" stroke="currentColor" stroke-width="2"/>
+                    </svg>
+                    <span>Preferred Time Slot</span>
+                  </div>
+                  <div class="timeslots-grid">
+                    @for (slot of timeSlots; track slot.value) {
+                      <button 
+                        class="timeslot"
+                        [class.selected]="selectedTimeSlot() === slot.value"
+                        (click)="selectTimeSlot(slot.value)"
+                      >{{ slot.label }}</button>
+                    }
+                  </div>
                 </div>
               </div>
             </div>
+          }
+        </div>
 
-            <div class="form-group">
-              <label class="form-label">Alternate Contact Number (Optional)</label>
-              <div class="input-with-prefix">
-                <span class="input-prefix">+91</span>
-                <input type="tel" formControlName="alternateNumber" class="form-input" placeholder="9876543210" maxlength="10" />
-              </div>
+        <!-- Step 3 Accordion - Address Details -->
+        <div class="accordion-step" [class.active]="currentStep() >= 3" [class.completed]="currentStep() > 3">
+          <div class="accordion-step__header">
+            <div class="accordion-step__title">
+              <span>Address Details</span>
             </div>
+            @if (currentStep() === 3 && isAddingNewAddress()) {
+              <div class="accordion-step__actions">
+                <button class="btn-back-address" (click)="cancelAddAddress(); $event.stopPropagation()">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                    <path d="M19 12H5M5 12L12 19M5 12L12 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                  Back to Addresses
+                </button>
+                <button class="btn-save-address" (click)="saveNewAddress(); $event.stopPropagation()" [disabled]="!newAddressForm.valid">Save New Address</button>
+              </div>
+            }
+            @if (currentStep() > 3) {
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" class="check-icon">
+                <circle cx="12" cy="12" r="11" fill="#10B981"/>
+                <path d="M8 12L11 15L16 9" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            }
+          </div>
+          
+          @if (currentStep() >= 3 && !isAddingNewAddress()) {
+            <div class="accordion-step__content">
+              <div class="addresses-list">
+                @for (address of addresses(); track address.id) {
+                  <button 
+                    class="address-card"
+                    [class.selected]="selectedAddressId() === address.id"
+                    (click)="selectAddress(address.id)"
+                  >
+                    <div class="address-card__icon">
+                      <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+                        <path d="M21 10C21 17 12 23 12 23C12 23 3 17 3 10C3 7.61305 3.94821 5.32387 5.63604 3.63604C7.32387 1.94821 9.61305 1 12 1C14.3869 1 16.6761 1.94821 18.364 3.63604C20.0518 5.32387 21 7.61305 21 10Z" stroke="#DC2626" stroke-width="2"/>
+                        <circle cx="12" cy="10" r="3" fill="#DC2626"/>
+                      </svg>
+                    </div>
+                    <div class="address-card__content">
+                      <div class="address-card__header">
+                        <h4>{{ address.label }}</h4>
+                        <span class="address-card__type">{{ address.houseType }}</span>
+                      </div>
+                      <p class="address-card__line">{{ address.line1 }}</p>
+                      <p class="address-card__city">{{ address.city }}, {{ address.state }} - {{ address.pincode }} &nbsp;•&nbsp; +91 {{ address.contactNumber }}</p>
+                    </div>
+                  </button>
+                }
+              </div>
 
-            <div class="form-group">
-              <label class="form-label">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                  <path d="M3 9L12 2L21 9V20C21 20.5304 20.7893 21.0391 20.4142 21.4142C20.0391 21.7893 19.5304 22 19 22H5C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20V9Z" stroke="currentColor" stroke-width="2"/>
+              <button class="btn-add-address" (click)="showAddAddressForm()">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                  <path d="M12 5V19M5 12H19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
                 </svg>
-                House Type
-              </label>
-              <div class="chip-group">
-                @for (type of houseTypes; track type) {
-                  <button type="button" class="chip" [class.selected]="selectedHouseType() === type" (click)="selectedHouseType.set(type)">{{ type }}</button>
-                }
-              </div>
+                Add New Address
+              </button>
             </div>
+          }
+          
+          @if (currentStep() === 3 && isAddingNewAddress()) {
+            <div class="accordion-step__content">
+              <form [formGroup]="newAddressForm" class="address-form">
+                <!-- Service Address - Full Width -->
+                <div class="form-group form-group--full">
+                  <label class="form-label">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                      <path d="M3 9L12 2L21 9V20C21 20.5304 20.7893 21.0391 20.4142 21.4142C20.0391 21.7893 19.5304 22 19 22H5C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20V9Z" stroke="currentColor" stroke-width="2"/>
+                    </svg>
+                    Service Address <span class="required">*</span>
+                  </label>
+                  <input type="text" formControlName="line1" class="form-input" placeholder="Enter your complete address (House/Flat no., Building, Street, Landmark)" />
+                </div>
 
-            <div class="form-group">
-              <div class="chip-group">
-                @for (type of locationTypes; track type) {
-                  <button type="button" class="chip" [class.selected]="selectedLocationType() === type" (click)="selectedLocationType.set(type)">{{ type }}</button>
-                }
-              </div>
+                <!-- City, State, PIN Code Row -->
+                <div class="form-row form-row--3">
+                  <div class="form-group">
+                    <label class="form-label">City <span class="required">*</span></label>
+                    <input type="text" formControlName="city" class="form-input" placeholder="e.g., Mumbai" />
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">State <span class="required">*</span></label>
+                    <input type="text" formControlName="state" class="form-input" placeholder="e.g., Maharashtra" />
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">PIN Code <span class="required">*</span></label>
+                    <input type="text" formControlName="pincode" class="form-input" placeholder="400001" maxlength="6" />
+                  </div>
+                </div>
+
+                <!-- Contact Name, Contact Number Row -->
+                <div class="form-row form-row--2">
+                  <div class="form-group">
+                    <label class="form-label">Contact Name <span class="required">*</span></label>
+                    <input type="text" formControlName="contactName" class="form-input" placeholder="Your full name" />
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Contact Number <span class="required">*</span></label>
+                    <div class="input-with-prefix">
+                      <span class="input-prefix">+91</span>
+                      <input type="tel" formControlName="contactNumber" class="form-input form-input--with-prefix" placeholder="9876543210" maxlength="10" />
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Alternate Contact Number -->
+                <div class="form-group">
+                  <label class="form-label">Alternate Contact Number (Optional)</label>
+                  <div class="input-with-prefix">
+                    <span class="input-prefix">+91</span>
+                    <input type="tel" formControlName="alternateNumber" class="form-input form-input--with-prefix" placeholder="9876543210" maxlength="10" />
+                  </div>
+                </div>
+
+                <!-- House Type -->
+                <div class="form-group">
+                  <label class="form-label">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                      <path d="M3 9L12 2L21 9V20C21 20.5304 20.7893 21.0391 20.4142 21.4142C20.0391 21.7893 19.5304 22 19 22H5C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20V9Z" stroke="currentColor" stroke-width="2"/>
+                    </svg>
+                    House Type
+                  </label>
+                  <div class="chip-group">
+                    @for (type of houseTypes; track type) {
+                      <button type="button" class="chip" [class.selected]="selectedHouseType() === type" (click)="selectedHouseType.set(type)">{{ type }}</button>
+                    }
+                  </div>
+                </div>
+
+                <!-- Location Type -->
+                <div class="form-group">
+                  <div class="chip-group">
+                    @for (type of locationTypes; track type) {
+                      <button type="button" class="chip" [class.selected]="selectedLocationType() === type" (click)="selectedLocationType.set(type)">{{ type }}</button>
+                    }
+                  </div>
+                </div>
+              </form>
             </div>
-          </form>
-        </section>
+          }
+        </div>
       </div>
     }
 
     <!-- Step 4: Summary -->
     @if (currentStep() === 4) {
-      <div class="step-content summary-step">
+      <div class="summary-layout">
         <div class="summary-left">
-          <!-- Expert Info -->
-          <div class="summary-card expert-summary">
-            <div class="expert-summary__avatar">
-              <img [src]="selectedExpert()?.photo || 'assets/images/default-avatar.png'" [alt]="selectedExpert()?.name" />
+          <!-- Expert Card with Service Type -->
+          <div class="summary-card expert-summary-card">
+            <div class="expert-summary-card__left">
+              <div class="expert-summary-card__avatar">
+                <img [src]="selectedExpert()?.photo || 'assets/images/default-avatar.png'" [alt]="selectedExpert()?.name" />
+              </div>
+              <div class="expert-summary-card__info">
+                <div class="expert-summary-card__name-row">
+                  <h4>{{ selectedExpert()?.name }}</h4>
+                  @if (selectedExpert()?.isVerified) {
+                    <span class="verified-badge">
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none">
+                        <path d="M5 12L10 17L20 7" stroke="currentColor" stroke-width="3"/>
+                      </svg>
+                      Verified
+                    </span>
+                  }
+                  <span class="expert-summary-card__rate">₹{{ selectedExpert()?.hourlyRate }}/hr</span>
+                </div>
+                <div class="expert-summary-card__meta">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" fill="#FFC107"/>
+                  </svg>
+                  {{ selectedExpert()?.rating }} ({{ selectedExpert()?.totalRatings }}), 
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style="margin-left: 8px;">
+                    <rect x="2" y="7" width="20" height="14" rx="2" stroke="currentColor" stroke-width="2"/>
+                    <path d="M16 7V5C16 3.9 15.1 3 14 3H10C8.9 3 8 3.9 8 5V7" stroke="currentColor" stroke-width="2"/>
+                  </svg>
+                  {{ selectedExpert()?.experience }} years experience
+                </div>
+                <div class="expert-summary-card__location">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                    <path d="M21 10C21 17 12 23 12 23C12 23 3 17 3 10C3 5 7 1 12 1C17 1 21 5 21 10Z" stroke="currentColor" stroke-width="2"/>
+                    <circle cx="12" cy="10" r="3" stroke="currentColor" stroke-width="2"/>
+                  </svg>
+                  {{ selectedExpert()?.distance?.toFixed(1) }} km away
+                </div>
+                <div class="expert-summary-card__skills">
+                  @for (skill of selectedExpert()?.skills?.slice(0, 2); track skill) {
+                    <span class="skill-tag">{{ skill }}</span>
+                  }
+                </div>
+                <div class="expert-summary-card__languages">Languages: {{ selectedExpert()?.languages?.join(', ') }}</div>
+              </div>
             </div>
-            <div class="expert-summary__info">
-              <div class="expert-summary__header">
-                <h4>{{ selectedExpert()?.name }}</h4>
-                @if (selectedExpert()?.isVerified) {
-                  <span class="verified-badge">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
-                      <path d="M5 12L10 17L20 7" stroke="currentColor" stroke-width="3"/>
-                    </svg>
-                    Verified
-                  </span>
-                }
-                <span class="rate">₹{{ selectedExpert()?.hourlyRate }}/hr</span>
+            <div class="expert-summary-card__right">
+              <div class="service-type-box">
+                <h5>Service Type</h5>
+                <div class="service-type-content">
+                  <div class="service-type-icon">
+                    <img [src]="selectedService()?.icon || 'assets/images/services/default-icon.png'" [alt]="selectedService()?.name" />
+                  </div>
+                  <span>{{ selectedService()?.name }}</span>
+                </div>
               </div>
-              <div class="expert-summary__meta">
-                <span>⭐ {{ selectedExpert()?.rating }} ({{ selectedExpert()?.totalRatings }}),</span>
-                <span>📋 {{ selectedExpert()?.experience }} years experience</span>
-              </div>
-              <div class="expert-summary__location">📍 {{ selectedExpert()?.distance?.toFixed(1) }} km away</div>
-              <div class="expert-summary__skills">
-                @for (skill of selectedExpert()?.skills?.slice(0, 2); track skill) {
-                  <span class="skill-tag">{{ skill }}</span>
-                }
-              </div>
-              <div class="expert-summary__languages">Languages: {{ selectedExpert()?.languages?.join(', ') }}</div>
             </div>
           </div>
 
-          <!-- Service Type -->
-          <div class="summary-card">
-            <h4>Service Type</h4>
-            <div class="service-type">
-              <svg width="40" height="40" viewBox="0 0 24 24" fill="none">
-                <path d="M3 9L12 2L21 9V20C21 20.5304 20.7893 21.0391 20.4142 21.4142C20.0391 21.7893 19.5304 22 19 22H5C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20V9Z" stroke="#0D436B" stroke-width="2"/>
-              </svg>
-              <span>{{ selectedService()?.name }}</span>
-            </div>
-          </div>
-
-          <!-- Schedule & Address -->
+          <!-- Schedule Details & Service Address Row -->
           <div class="summary-row">
-            <div class="summary-card">
-              <h4>📅 Schedule Details</h4>
-              <div class="detail-row">
-                <span>Frequency:</span>
-                <span>{{ bookingFrequency() | titlecase }}</span>
-              </div>
-              <div class="detail-row">
-                <span>Start Date:</span>
-                <span>{{ formatDate(selectedDate()) }}</span>
-              </div>
-              <div class="detail-row">
-                <span>Time Slot:</span>
-                <span>{{ selectedTimeSlot() }}</span>
-              </div>
-              <div class="detail-row">
-                <span>Duration per session:</span>
-                <span>2 hours</span>
+            <div class="summary-card schedule-card">
+              <h4>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                  <rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" stroke-width="2"/>
+                  <path d="M16 2V6M8 2V6M3 10H21" stroke="currentColor" stroke-width="2"/>
+                </svg>
+                Schedule Details
+              </h4>
+              <div class="schedule-details">
+                <div class="schedule-item">
+                  <span class="schedule-label">Frequency:</span>
+                  <span class="schedule-value">{{ bookingFrequency }}</span>
+                </div>
+                <div class="schedule-item">
+                  <span class="schedule-label">Start Date:</span>
+                  <span class="schedule-value">{{ formatDate(selectedDate()) }}</span>
+                </div>
+                <div class="schedule-item">
+                  <span class="schedule-label">Time Slot:</span>
+                  <span class="schedule-value">{{ getTimeSlotLabel(selectedTimeSlot()) }}</span>
+                </div>
+                <div class="schedule-item">
+                  <span class="schedule-label">Duration per session:</span>
+                  <span class="schedule-value">2 hours</span>
+                </div>
               </div>
             </div>
 
-            <div class="summary-card">
-              <h4>📍 Service Address</h4>
-              <p>{{ selectedAddress()?.line1 }}, {{ selectedAddress()?.pincode }}</p>
+            <div class="summary-card address-card-summary">
+              <h4>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                  <path d="M21 10C21 17 12 23 12 23C12 23 3 17 3 10C3 7.61305 3.94821 5.32387 5.63604 3.63604C7.32387 1.94821 9.61305 1 12 1C14.3869 1 16.6761 1.94821 18.364 3.63604C20.0518 5.32387 21 7.61305 21 10Z" stroke="currentColor" stroke-width="2"/>
+                  <circle cx="12" cy="10" r="3" stroke="currentColor" stroke-width="2"/>
+                </svg>
+                Service Address
+              </h4>
+              <p class="address-text">{{ selectedAddress()?.line1 }}, {{ selectedAddress()?.pincode }}</p>
             </div>
           </div>
 
           <!-- Coupons -->
-          <div class="summary-card coupons-section">
+          <div class="summary-card">
             <h4>🏷️ Available Coupons</h4>
             <div class="coupons-list">
               @for (coupon of coupons(); track coupon.id) {
@@ -523,7 +537,7 @@
                   <div class="coupon-card__info">
                     <strong>{{ coupon.discountType === 'percentage' ? coupon.discountValue + '% OFF' : '₹' + coupon.discountValue + ' OFF' }}</strong>
                     <p>{{ coupon.description }}</p>
-                    <span>Min. order: ₹{{ coupon.minOrderValue }}</span>
+                    <span class="coupon-card__min">Min. order: ₹{{ coupon.minOrderValue }}</span>
                   </div>
                   @if (!isCouponEligible(coupon)) {
                     <span class="not-eligible">Not Eligible</span>
@@ -544,7 +558,7 @@
           </div>
         </div>
 
-        <!-- Price Summary -->
+        <!-- Price Summary Sidebar -->
         <div class="summary-right">
           <div class="price-summary">
             <h4>Price Summary</h4>
@@ -581,9 +595,9 @@
     <div class="modal-overlay" (click)="closePaymentModal()">
       <div class="payment-modal" (click)="$event.stopPropagation()">
         @if (!isPaymentSuccess()) {
-          <!-- Payment Form -->
-          <div class="payment-modal__header">
-            <div class="price-summary-mini">
+          <div class="payment-modal__content">
+            <!-- Price Summary Side -->
+            <div class="payment-modal__summary">
               <h4>Price Summary</h4>
               <div class="price-row">
                 <span>Base Amount</span>
@@ -603,8 +617,9 @@
               </div>
             </div>
 
-            <div class="payment-form">
-              <div class="payment-form__header">
+            <!-- Payment Form Side -->
+            <div class="payment-modal__form">
+              <div class="payment-modal__header">
                 <h3>PAYMENT</h3>
                 <button class="close-btn" (click)="closePaymentModal()">
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
@@ -613,7 +628,6 @@
                 </button>
               </div>
 
-              <!-- Payment Method Tabs -->
               <div class="payment-tabs">
                 <button [class.active]="selectedPaymentMethod() === 'card'" (click)="selectedPaymentMethod.set('card')">Card Payment</button>
                 <button [class.active]="selectedPaymentMethod() === 'upi'" (click)="selectedPaymentMethod.set('upi')">UPI Payment</button>
@@ -630,7 +644,7 @@
                     <label>Cardholder Name</label>
                     <input type="text" placeholder="John Doe" />
                   </div>
-                  <div class="form-row">
+                  <div class="form-row-2">
                     <div class="form-group">
                       <label>Expiry Date</label>
                       <input type="text" placeholder="MM/YY" />
@@ -641,9 +655,9 @@
                     </div>
                   </div>
                   <p class="secure-notice">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
                       <rect x="3" y="11" width="18" height="11" rx="2" stroke="currentColor" stroke-width="2"/>
-                      <path d="M7 11V7C7 5.67392 7.52678 4.40215 8.46447 3.46447C9.40215 2.52678 10.6739 2 12 2C13.3261 2 14.5979 2.52678 15.5355 3.46447C16.4732 4.40215 17 5.67392 17 7V11" stroke="currentColor" stroke-width="2"/>
+                      <path d="M7 11V7C7 4.23858 9.23858 2 12 2C14.7614 2 17 4.23858 17 7V11" stroke="currentColor" stroke-width="2"/>
                     </svg>
                     Your card details are encrypted and secure
                   </p>
@@ -669,10 +683,7 @@
               </svg>
             </button>
             <div class="success-icon">
-              <svg width="80" height="80" viewBox="0 0 24 24" fill="none">
-                <circle cx="12" cy="12" r="10" fill="#0D436B"/>
-                <path d="M8 12L11 15L16 9" stroke="white" stroke-width="2" stroke-linecap="round"/>
-              </svg>
+              <img src="assets/images/payment-success.png" alt="Success" />
             </div>
             <h3>Payment was Successful</h3>
             <p>Soon you will get confirmation on the service address and further details.</p>

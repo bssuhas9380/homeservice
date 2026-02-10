@@ -5,13 +5,15 @@
 
 /* CSS Variables */
 :root {
-  /* Colors */
-  --color-primary: #0D436B;
-  --color-primary-light: #366F85;
+  /* Colors - Teal Theme matching logo */
+  --color-primary: #0D9488;
+  --color-primary-dark: #0F766E;
+  --color-primary-light: #14B8A6;
+  --color-navy: #0D436B;
   --color-text-dark: #181D27;
   --color-text-light: #535862;
   --color-background: #F5F9FB;
-  --color-background-gradient: linear-gradient(180deg, #FFFFFF 0%, #E8F4F8 100%);
+  --color-background-gradient: linear-gradient(180deg, #FFFFFF 0%, #E8F5F4 100%);
   --color-white: #FFFFFF;
   --color-border: #E9EAEB;
   
@@ -174,7 +176,7 @@ ul, ol {
   line-height: 20px;
   
   &:hover {
-    background: #0a3555;
+    background: var(--color-primary-dark);
   }
   
   &:active {

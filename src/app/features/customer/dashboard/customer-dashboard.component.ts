@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterLink, Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { BookingService, Booking } from '../../../core/services/booking.service';
+import { NavbarComponent } from '../../../shared/components/navbar/navbar.component';
 
 interface FAQ {
   id: string;
@@ -13,7 +14,7 @@ interface FAQ {
 @Component({
   selector: 'app-customer-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, NavbarComponent],
   templateUrl: './customer-dashboard.component.html',
   styleUrl: './customer-dashboard.component.scss'
 })

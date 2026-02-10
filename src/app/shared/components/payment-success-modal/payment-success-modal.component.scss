@@ -1,0 +1,116 @@
+/* Payment Success Modal Styles - Matching Figma Exactly */
+
+.success-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  padding: 20px;
+  animation: fadeIn 0.2s ease;
+}
+
+.success-modal {
+  position: relative;
+  background: #FFFFFF;
+  border-radius: 20px;
+  width: 100%;
+  max-width: 400px;
+  padding: 32px 40px 40px;
+  text-align: center;
+  animation: scaleIn 0.3s ease;
+  
+  &__close {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    color: #535862;
+    transition: all 0.2s ease;
+    
+    &:hover {
+      background: #F5F5F5;
+      color: #181D27;
+    }
+  }
+  
+  &__illustration {
+    margin-bottom: 24px;
+    
+    svg {
+      width: 160px;
+      height: 160px;
+    }
+  }
+  
+  &__title {
+    color: #181D27;
+    font-family: 'Open Sans', sans-serif;
+    font-size: 24px;
+    font-weight: 600;
+    margin: 0 0 12px;
+  }
+  
+  &__message {
+    color: #535862;
+    font-family: 'Open Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 22px;
+    margin: 0 0 24px;
+    max-width: 280px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  
+  &__amount {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 8px;
+    
+    .amount {
+      color: #0D9488;
+      font-family: 'Open Sans', sans-serif;
+      font-size: 28px;
+      font-weight: 700;
+    }
+    
+    .label {
+      color: #0D9488;
+      font-family: 'Open Sans', sans-serif;
+      font-size: 18px;
+      font-weight: 600;
+    }
+  }
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}

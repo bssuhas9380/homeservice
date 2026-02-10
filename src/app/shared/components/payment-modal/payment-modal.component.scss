@@ -1,0 +1,265 @@
+/* Payment Modal Styles - Matching Figma Exactly */
+
+.payment-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  padding: 20px;
+  animation: fadeIn 0.2s ease;
+}
+
+.payment-modal {
+  background: #FFFFFF;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 480px;
+  max-height: 90vh;
+  overflow-y: auto;
+  animation: slideUp 0.3s ease;
+  
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 24px 24px 16px;
+    border-bottom: 1px solid #E9EAEB;
+  }
+  
+  &__title {
+    color: #0D436B;
+    font-family: 'Open Sans', sans-serif;
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    margin: 0;
+  }
+  
+  &__close {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    color: #535862;
+    transition: all 0.2s ease;
+    
+    &:hover {
+      background: #F5F5F5;
+      color: #181D27;
+    }
+  }
+  
+  &__content {
+    padding: 24px;
+  }
+  
+  &__pay-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: calc(100% - 48px);
+    margin: 0 24px 24px;
+    padding: 16px 32px;
+    background: #0D436B;
+    color: #FFFFFF;
+    font-family: 'Open Sans', sans-serif;
+    font-size: 16px;
+    font-weight: 600;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    
+    &:hover:not(:disabled) {
+      background: #0a3555;
+    }
+    
+    &:disabled {
+      background: #A0AEC0;
+      cursor: not-allowed;
+    }
+    
+    .spinner {
+      width: 20px;
+      height: 20px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-top-color: #FFFFFF;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+  }
+}
+
+/* Payment Tabs */
+.payment-tabs {
+  display: flex;
+  gap: 0;
+  padding: 0 24px;
+  border-bottom: 1px solid #E9EAEB;
+  
+  &__tab {
+    flex: 1;
+    padding: 16px 8px;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: #717680;
+    font-family: 'Open Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    
+    &:hover {
+      color: #181D27;
+    }
+    
+    &.active {
+      color: #0D436B;
+      border-bottom-color: #0D436B;
+      font-weight: 600;
+    }
+  }
+}
+
+/* Form Styles */
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-label {
+  display: block;
+  margin-bottom: 8px;
+  color: #181D27;
+  font-family: 'Open Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.form-input {
+  width: 100%;
+  padding: 14px 16px;
+  background: #FFFFFF;
+  border: 1px solid #E9EAEB;
+  border-radius: 8px;
+  color: #181D27;
+  font-family: 'Open Sans', sans-serif;
+  font-size: 14px;
+  transition: all 0.2s ease;
+  
+  &::placeholder {
+    color: #A0AEC0;
+  }
+  
+  &:focus {
+    outline: none;
+    border-color: #0D436B;
+    box-shadow: 0 0 0 3px rgba(13, 67, 107, 0.1);
+  }
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+/* Security Note */
+.security-note {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: #F5F9FB;
+  border-radius: 8px;
+  margin-top: 8px;
+  
+  svg {
+    color: #717680;
+    flex-shrink: 0;
+  }
+  
+  span {
+    color: #535862;
+    font-family: 'Open Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 400;
+  }
+}
+
+/* UPI Payment Form */
+.upi-payment-form {
+  .upi-info {
+    color: #717680;
+    font-family: 'Open Sans', sans-serif;
+    font-size: 13px;
+    margin-top: -8px;
+  }
+}
+
+/* Net Banking Form */
+.netbanking-form {
+  .netbanking-info {
+    color: #535862;
+    font-family: 'Open Sans', sans-serif;
+    font-size: 14px;
+    margin-bottom: 16px;
+  }
+}
+
+.bank-list {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.bank-option {
+  padding: 14px 16px;
+  background: #FFFFFF;
+  border: 1px solid #E9EAEB;
+  border-radius: 8px;
+  color: #181D27;
+  font-family: 'Open Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    border-color: #0D436B;
+    background: #F5F9FB;
+  }
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}

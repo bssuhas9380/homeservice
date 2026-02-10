@@ -334,4 +334,9 @@ export class BookingService {
       } : null)
     );
   }
+
+  // Get FAQs
+  getFaqs(): Observable<{ id: string; question: string; answer: string }[]> {
+    return this.http.get<{ id: string; question: string; answer: string }[]>(`${this.API_URL}/faqs`);
+  }
 }

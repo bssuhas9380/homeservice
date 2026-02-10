@@ -1,0 +1,59 @@
+<!-- Payment Success Modal - Matching Figma Exactly -->
+@if (isOpen()) {
+  <div class="success-modal-overlay" (click)="onBackdropClick($event)">
+    <div class="success-modal">
+      <!-- Close Button -->
+      <button class="success-modal__close" (click)="onClose()">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+          <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </button>
+
+      <!-- Success Illustration -->
+      <div class="success-modal__illustration">
+        <svg width="160" height="160" viewBox="0 0 160 160" fill="none">
+          <!-- Card with checkmark -->
+          <rect x="30" y="50" width="80" height="55" rx="8" fill="#3B82F6"/>
+          <rect x="38" y="62" width="30" height="4" rx="2" fill="#93C5FD"/>
+          <rect x="38" y="70" width="20" height="4" rx="2" fill="#93C5FD"/>
+          <rect x="38" y="78" width="25" height="4" rx="2" fill="#93C5FD"/>
+          <rect x="38" y="86" width="15" height="4" rx="2" fill="#93C5FD"/>
+          
+          <!-- Chip -->
+          <rect x="74" y="62" width="28" height="20" rx="3" fill="#FCD34D"/>
+          <line x1="74" y1="68" x2="102" y2="68" stroke="#F59E0B" stroke-width="1"/>
+          <line x1="74" y1="74" x2="102" y2="74" stroke="#F59E0B" stroke-width="1"/>
+          <line x1="86" y1="62" x2="86" y2="82" stroke="#F59E0B" stroke-width="1"/>
+          
+          <!-- Phone/Device behind -->
+          <rect x="55" y="35" width="70" height="100" rx="10" fill="#E0F2FE" stroke="#3B82F6" stroke-width="2"/>
+          
+          <!-- Checkmark circle -->
+          <circle cx="100" cy="100" r="25" fill="#10B981"/>
+          <path d="M88 100L96 108L112 92" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+          
+          <!-- Decorative elements -->
+          <circle cx="130" cy="45" r="12" fill="#FCD34D"/>
+          <path d="M126 45L130 41L134 45L130 49L126 45Z" fill="#F59E0B"/>
+          
+          <!-- Sparkles -->
+          <circle cx="45" cy="40" r="4" fill="#FCD34D"/>
+          <circle cx="125" cy="75" r="3" fill="#10B981"/>
+          <circle cx="35" cy="85" r="3" fill="#3B82F6"/>
+        </svg>
+      </div>
+
+      <!-- Success Message -->
+      <h2 class="success-modal__title">Payment was Successful</h2>
+      <p class="success-modal__message">
+        Soon you will get confirmation on the service address and futher details.
+      </p>
+
+      <!-- Amount Paid -->
+      <div class="success-modal__amount">
+        <span class="amount">₹{{ amountPaid() | number:'1.2-2' }}</span>
+        <span class="label">Paid</span>
+      </div>
+    </div>
+  </div>
+}

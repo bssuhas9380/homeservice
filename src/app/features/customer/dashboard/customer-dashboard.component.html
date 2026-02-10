@@ -1,38 +1,7 @@
 <!-- Customer Dashboard -->
 <div class="dashboard-page">
-  <!-- Header -->
-  <header class="header">
-    <div class="header__container">
-      <a routerLink="/" class="header__logo">
-        <div class="header__logo-icon"><span>H</span></div>
-        <span class="header__logo-text">HouseMate</span>
-      </a>
-      
-      <nav class="header__nav">
-        <a routerLink="/customer/services" class="header__nav-link">Services</a>
-        <a routerLink="/customer/bookings" class="header__nav-link">My Bookings</a>
-        
-        <div class="user-menu">
-          <button class="user-menu__trigger" (click)="toggleUserMenu()">
-            <div class="user-menu__avatar">
-              <img src="assets/images/default-avatar.png" alt="User" />
-            </div>
-            <span class="user-menu__name">{{ userName() }}</span>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" [class.rotated]="isUserMenuOpen()">
-              <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-            </svg>
-          </button>
-          @if (isUserMenuOpen()) {
-            <div class="user-menu__dropdown">
-              <a routerLink="/customer/profile" class="user-menu__item">My Profile</a>
-              <a routerLink="/customer/bookings" class="user-menu__item">My Bookings</a>
-              <button class="user-menu__item user-menu__item--logout" (click)="logout()">Logout</button>
-            </div>
-          }
-        </div>
-      </nav>
-    </div>
-  </header>
+  <!-- Shared Navbar -->
+  <app-navbar [pageType]="'customer'" />
 
   <!-- Main Content -->
   <main class="main-content">
