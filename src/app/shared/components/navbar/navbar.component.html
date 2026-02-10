@@ -11,13 +11,13 @@
     
     <!-- Navigation -->
     <nav class="navbar__nav">
-      @if (pageType() === 'customer') {
-        <a routerLink="/customer/services" class="navbar__nav-link">Services</a>
+      @if (pageType === 'customer') {
+        <a routerLink="/customer/book-service" class="navbar__nav-link">Services</a>
         <a routerLink="/customer/bookings" class="navbar__nav-link">My Bookings</a>
-      } @else if (pageType() === 'expert') {
+      } @else if (pageType === 'expert') {
         <a routerLink="/expert/dashboard" class="navbar__nav-link">Dashboard</a>
         <a routerLink="/expert/bookings" class="navbar__nav-link">My Jobs</a>
-      } @else if (pageType() === 'admin') {
+      } @else if (pageType === 'admin') {
         <a routerLink="/admin/dashboard" class="navbar__nav-link">Dashboard</a>
         <a routerLink="/admin/users" class="navbar__nav-link">Users</a>
       }

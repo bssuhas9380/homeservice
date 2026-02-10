@@ -1,6 +1,6 @@
-import { Component, OnInit, signal, computed } from '@angular/core';
+import { Component, OnInit, signal, computed, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink, Router } from '@angular/router';
+import { RouterLink, Router, ActivatedRoute } from '@angular/router';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { AuthService } from '../../../core/services/auth.service';
 import { BookingService, BookingStatus, PaymentStatus, Service, Booking } from '../../../core/services/booking.service';
@@ -52,6 +52,11 @@ interface Coupon {
   styleUrl: './book-service.component.scss'
 })
 export class BookServiceComponent implements OnInit {
+  // Mode: 'new' for new booking, 'modify' for modifying existing booking
+  isModifyMode = signal(false);
+  originalBookingId = signal<string | null>(null);
+  originalBookingAmount = signal<number>(0);
+
   // Signals for state management
   currentStep = signal(1);
   isUserMenuOpen = signal(false);
@@ -135,11 +140,21 @@ export class BookServiceComponent implements OnInit {
     return this.baseAmount() + this.gstAmount() - this.appliedDiscount();
   });
 
+  // Modify mode computed properties
+  paymentDifference = computed(() => {
+    if (!this.isModifyMode()) return 0;
+    return this.totalAmount() - this.originalBookingAmount();
+  });
+
+  isAdditionalPaymentRequired = computed(() => this.paymentDifference() > 0);
+  isRefundApplicable = computed(() => this.paymentDifference() < 0);
+
   constructor(
     private authService: AuthService,
     private bookingService: BookingService,
     private router: Router,
-    private fb: FormBuilder
+    private fb: FormBuilder,
+    private route: ActivatedRoute
   ) {
     this.newAddressForm = this.fb.group({
       line1: ['', Validators.required],
@@ -156,6 +171,97 @@ export class BookServiceComponent implements OnInit {
     this.loadServices();
     this.loadAddresses();
     this.loadCoupons();
+    this.checkModifyMode();
+  }
+
+  checkModifyMode(): void {
+    this.route.queryParams.subscribe(params => {
+      if (params['mode'] === 'modify' && params['bookingId']) {
+        this.isModifyMode.set(true);
+        this.originalBookingId.set(params['bookingId']);
+        
+        // Get booking data from navigation state
+        const navigation = this.router.getCurrentNavigation();
+        const state = navigation?.extras?.state || history.state;
+        
+        if (state?.booking) {
+          this.populateFromBooking(state.booking);
+        } else {
+          // Fetch booking data from service if not in state
+          this.fetchAndPopulateBooking(params['bookingId']);
+        }
+      }
+    });
+  }
+
+  populateFromBooking(booking: any): void {
+    // Store original amount for comparison
+    this.originalBookingAmount.set(booking.totalAmount || 0);
+
+    // Set service
+    if (booking.serviceId) {
+      this.selectedServiceId.set(booking.serviceId);
+      this.loadExperts(booking.serviceId);
+    }
+
+    // Wait for experts to load, then select the expert
+    const expertId = booking.expertId || history.state?.expertId;
+    if (expertId) {
+      // Try multiple times as experts load async
+      const selectExpert = (retries: number) => {
+        const expert = this.experts().find(e => e.id === expertId);
+        if (expert) {
+          this.selectedExpert.set(expert);
+        } else if (retries > 0) {
+          setTimeout(() => selectExpert(retries - 1), 300);
+        }
+      };
+      setTimeout(() => selectExpert(5), 500);
+    }
+
+    // Set date and time
+    if (booking.date) {
+      this.selectedDate.set(new Date(booking.date));
+    }
+    if (booking.timeSlot) {
+      this.selectedTimeSlot.set(booking.timeSlot);
+    }
+    if (booking.frequency) {
+      this.bookingFrequency = booking.frequency.charAt(0).toUpperCase() + booking.frequency.slice(1);
+    }
+
+    // Set address
+    if (booking.addressId) {
+      this.selectedAddressId.set(booking.addressId);
+    }
+
+    // Set coupon
+    if (booking.couponCode) {
+      this.couponCode = booking.couponCode;
+      setTimeout(() => {
+        this.applyCoupon();
+      }, 300);
+    }
+
+    // In modify mode, go directly to summary step (step 4)
+    // All steps are now accessible for editing
+    setTimeout(() => {
+      this.currentStep.set(4);
+    }, 800);
+  }
+
+  fetchAndPopulateBooking(bookingId: string): void {
+    this.bookingService.getBookingById(bookingId).subscribe({
+      next: (booking) => {
+        if (booking) {
+          this.populateFromBooking(booking);
+        }
+      },
+      error: () => {
+        console.error('Could not fetch booking for modification');
+        this.router.navigate(['/customer/bookings']);
+      }
+    });
   }
 
   loadServices(): void {
@@ -344,6 +450,16 @@ export class BookServiceComponent implements OnInit {
     }
   }
 
+  // Check if a step is completed (used for showing tick marks)
+  isStepCompleted(step: number): boolean {
+    // In modify mode, all steps are considered completed initially
+    if (this.isModifyMode()) {
+      return this.isStepComplete(step);
+    }
+    // In normal mode, only steps before current are completed
+    return step < this.currentStep() && this.isStepComplete(step);
+  }
+
   nextStep(): void {
     if (this.currentStep() < 4 && this.isStepComplete(this.currentStep())) {
       this.currentStep.set(this.currentStep() + 1);
@@ -351,6 +467,12 @@ export class BookServiceComponent implements OnInit {
   }
 
   goToStep(step: number): void {
+    // In modify mode, allow going to any step (all steps are pre-filled)
+    if (this.isModifyMode()) {
+      this.currentStep.set(step);
+      return;
+    }
+    // In normal mode, only allow going back or to completed steps
     if (step <= this.currentStep() || this.isStepComplete(step - 1)) {
       this.currentStep.set(step);
     }
@@ -365,7 +487,8 @@ export class BookServiceComponent implements OnInit {
   closePaymentModal(): void {
     this.isPaymentModalOpen.set(false);
     if (this.isPaymentSuccess()) {
-      this.router.navigate(['/customer/dashboard']);
+      // Redirect to bookings page after successful payment/update
+      this.router.navigate(['/customer/bookings']);
     }
   }
 
@@ -395,16 +518,31 @@ export class BookServiceComponent implements OnInit {
         paymentStatus: PaymentStatus.PAID
       };
 
-      this.bookingService.createBooking(bookingData).subscribe({
-        next: () => {
-          this.isProcessingPayment.set(false);
-          this.isPaymentSuccess.set(true);
-        },
-        error: () => {
-          this.isProcessingPayment.set(false);
-          alert('Payment failed. Please try again.');
-        }
-      });
+      if (this.isModifyMode() && this.originalBookingId()) {
+        // Update existing booking
+        this.bookingService.updateBooking(this.originalBookingId()!, bookingData).subscribe({
+          next: () => {
+            this.isProcessingPayment.set(false);
+            this.isPaymentSuccess.set(true);
+          },
+          error: () => {
+            this.isProcessingPayment.set(false);
+            alert('Failed to update booking. Please try again.');
+          }
+        });
+      } else {
+        // Create new booking
+        this.bookingService.createBooking(bookingData).subscribe({
+          next: () => {
+            this.isProcessingPayment.set(false);
+            this.isPaymentSuccess.set(true);
+          },
+          error: () => {
+            this.isProcessingPayment.set(false);
+            alert('Payment failed. Please try again.');
+          }
+        });
+      }
     }, 2000);
   }
 

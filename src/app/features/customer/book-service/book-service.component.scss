@@ -23,12 +23,17 @@ $gray-900: #111827;
   background: linear-gradient(180deg, #E8F5F4 0%, #F0F9F8 30%, #F5FBFA 60%, #FFFFFF 100%);
 }
 
-// Main Content - adjusted for fixed navbar
+// Main Content - adjusted for fixed navbar with margins
 .main-content {
-  max-width: 1280px;
+  max-width: 1200px;
   margin: 0 auto;
-  padding: 24px;
-  padding-top: calc(72px + 24px); // Navbar height + spacing
+  padding: 24px 40px;
+  padding-top: calc(96px + 16px); // Navbar height + margin + spacing
+  
+  @media (max-width: 768px) {
+    padding: 16px 20px;
+    padding-top: calc(88px + 12px);
+  }
 }
 
 // Header
@@ -1515,6 +1520,117 @@ $gray-900: #111827;
     font-size: 18px;
     font-weight: 700;
     color: $gray-900;
+  }
+
+  &.original {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px dashed $gray-300;
+    color: $gray-500;
+    
+    span:last-child {
+      text-decoration: line-through;
+    }
+  }
+}
+
+// Modify Mode Payment Difference
+.modify-payment-info {
+  margin-top: 8px;
+}
+
+.payment-diff {
+  display: flex;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 12px;
+  margin-top: 16px;
+
+  &__icon {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    svg {
+      width: 20px;
+      height: 20px;
+    }
+  }
+
+  &__text {
+    strong {
+      display: block;
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    p {
+      margin: 0;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+  }
+
+  &.pay-more {
+    background: #FEF3C7;
+    border: 1px solid #F59E0B;
+
+    .payment-diff__icon {
+      background: #FDE68A;
+      color: #D97706;
+    }
+
+    .payment-diff__text {
+      strong {
+        color: #B45309;
+      }
+      p {
+        color: #92400E;
+      }
+    }
+  }
+
+  &.refund {
+    background: #D1FAE5;
+    border: 1px solid $green-success;
+
+    .payment-diff__icon {
+      background: #A7F3D0;
+      color: #059669;
+    }
+
+    .payment-diff__text {
+      strong {
+        color: #047857;
+      }
+      p {
+        color: #065F46;
+      }
+    }
+  }
+
+  &.no-change {
+    background: #E0F2FE;
+    border: 1px solid #0EA5E9;
+
+    .payment-diff__icon {
+      background: #BAE6FD;
+      color: #0284C7;
+    }
+
+    .payment-diff__text {
+      strong {
+        color: #0369A1;
+      }
+      p {
+        color: #075985;
+      }
+    }
   }
 }
 

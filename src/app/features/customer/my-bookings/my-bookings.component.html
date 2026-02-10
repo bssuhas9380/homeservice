@@ -1,0 +1,419 @@
+<!-- My Bookings Page - Matching Figma Exactly -->
+<div class="my-bookings-page">
+  <!-- Navbar -->
+  <app-navbar [pageType]="'customer'" />
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <div class="content-wrapper">
+      <!-- Breadcrumb -->
+      <nav class="breadcrumb">
+        <a routerLink="/customer/dashboard">Home</a>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+          <path d="M9 18L15 12L9 6" stroke="currentColor" stroke-width="2"/>
+        </svg>
+        <span class="breadcrumb__active">My Bookings</span>
+      </nav>
+
+      <!-- Page Header -->
+      <div class="page-header">
+        <div class="page-header__left">
+          <h1 class="page-header__title">My Bookings</h1>
+          <p class="page-header__subtitle">Track and manage all your service bookings</p>
+        </div>
+        <div class="page-header__actions">
+          <button class="icon-btn">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2"/>
+              <path d="M21 21L16.65 16.65" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </button>
+          <button class="icon-btn">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <path d="M22 3H2L10 12.46V19L14 21V12.46L22 3Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Filter Tabs -->
+      <div class="filter-tabs">
+        <button 
+          class="filter-tab" 
+          [class.active]="activeTab() === 'all'"
+          (click)="setActiveTab('all')">
+          All Bookings
+          <span class="filter-tab__count">{{ tabCounts().all }}</span>
+        </button>
+        <button 
+          class="filter-tab filter-tab--upcoming" 
+          [class.active]="activeTab() === 'upcoming'"
+          (click)="setActiveTab('upcoming')">
+          Upcoming
+          <span class="filter-tab__count">{{ tabCounts().upcoming }}</span>
+        </button>
+        <button 
+          class="filter-tab filter-tab--completed" 
+          [class.active]="activeTab() === 'completed'"
+          (click)="setActiveTab('completed')">
+          Completed
+          <span class="filter-tab__count">{{ tabCounts().completed }}</span>
+        </button>
+        <button 
+          class="filter-tab filter-tab--cancelled" 
+          [class.active]="activeTab() === 'cancelled'"
+          (click)="setActiveTab('cancelled')">
+          Cancelled
+          <span class="filter-tab__count">{{ tabCounts().cancelled }}</span>
+        </button>
+        <button 
+          class="filter-tab filter-tab--rejected" 
+          [class.active]="activeTab() === 'rejected'"
+          (click)="setActiveTab('rejected')">
+          Rejected
+          <span class="filter-tab__count">{{ tabCounts().rejected }}</span>
+        </button>
+      </div>
+
+      <!-- Loading State -->
+      @if (isLoading()) {
+        <div class="loading-state">
+          <div class="spinner"></div>
+          <p>Loading your bookings...</p>
+        </div>
+      } @else if (filteredBookings().length === 0) {
+        <div class="empty-state">
+          <svg width="64" height="64" viewBox="0 0 24 24" fill="none">
+            <rect x="3" y="4" width="18" height="18" rx="2" stroke="#D1D5DB" stroke-width="2"/>
+            <path d="M16 2V6M8 2V6M3 10H21" stroke="#D1D5DB" stroke-width="2"/>
+          </svg>
+          <h3>No bookings found</h3>
+          <p>You don't have any {{ activeTab() !== 'all' ? activeTab() : '' }} bookings yet.</p>
+          <a routerLink="/customer/book-service" class="btn-primary">Book a Service</a>
+        </div>
+      } @else {
+        <!-- Bookings Grid -->
+        <div class="bookings-grid">
+          @for (booking of filteredBookings(); track booking.id) {
+            <div class="booking-card" [class]="'booking-card--' + booking.status">
+              <!-- Card Header -->
+              <div class="booking-card__header">
+                <div class="booking-card__service">
+                  <div class="booking-card__icon">
+                    <img [src]="booking.serviceIcon || 'assets/images/services/default-icon.png'" [alt]="booking.serviceName" />
+                  </div>
+                  <div class="booking-card__info">
+                    <h3 class="booking-card__name">{{ booking.serviceName }}</h3>
+                    <span class="booking-card__id">Booking ID: {{ booking.id }}</span>
+                  </div>
+                </div>
+                <div class="booking-card__status-area">
+                  <span class="status-badge" [class]="getStatusClass(booking.status)">
+                    <span class="status-dot"></span>
+                    {{ getStatusLabel(booking.status) }}
+                  </span>
+                  <span class="payment-badge" [class]="getPaymentClass(booking)">
+                    {{ getPaymentLabel(booking) }}
+                  </span>
+                </div>
+              </div>
+
+              <!-- Card Body -->
+              <div class="booking-card__body">
+                <!-- Schedule Info -->
+                <div class="schedule-info">
+                  <div class="schedule-item">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                      <rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" stroke-width="2"/>
+                      <path d="M16 2V6M8 2V6M3 10H21" stroke="currentColor" stroke-width="2"/>
+                    </svg>
+                    <span>{{ formatDate(booking.scheduledDate || '') }}</span>
+                  </div>
+                  <div class="schedule-item">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                      <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                      <path d="M12 6V12L16 14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                    <span>{{ formatTime(booking.scheduledTime || '') }}, booked for {{ booking.duration }}hrs</span>
+                  </div>
+                  <div class="schedule-item">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                      <path d="M21 10C21 17 12 23 12 23C12 23 3 17 3 10C3 5 7 1 12 1C17 1 21 5 21 10Z" stroke="currentColor" stroke-width="2"/>
+                      <circle cx="12" cy="10" r="3" stroke="currentColor" stroke-width="2"/>
+                    </svg>
+                    <span>{{ booking.address }}</span>
+                  </div>
+                </div>
+
+                <!-- Expert Info (if available) -->
+                @if (booking.expert) {
+                  <div class="expert-info">
+                    <span class="expert-info__label">Service Expert</span>
+                    <div class="expert-info__content">
+                      <div class="expert-info__left">
+                        <div class="expert-info__avatar">
+                          <img [src]="booking.expert.avatar || 'assets/images/default-avatar.png'" [alt]="booking.expert.name" />
+                        </div>
+                        <div class="expert-info__details">
+                          <span class="expert-info__name">{{ booking.expert.name }}</span>
+                          <span class="expert-info__phone">{{ booking.expert.phone | phoneFormat }}</span>
+                        </div>
+                      </div>
+                      <button class="btn-call" (click)="callExpert(booking.expert.phone)">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                          <path d="M22 16.92V19.92C22 20.48 21.56 20.93 21 20.97C20.36 21.02 19.74 21 19.13 20.91C15.16 20.33 11.46 18.68 8.44 16.13C5.58 13.71 3.31 10.67 1.97 7.28C1.68 6.57 1.45 5.84 1.28 5.1C1.17 4.6 1.57 4.12 2.08 4.07L5.08 3.77C5.54 3.73 5.95 4.02 6.08 4.46L6.98 7.71C7.1 8.12 6.96 8.56 6.63 8.82L4.85 10.23C6.61 13.29 9.09 15.77 12.14 17.53L13.55 15.75C13.81 15.42 14.25 15.28 14.66 15.4L17.91 16.3C18.35 16.43 18.64 16.84 18.6 17.3L18.3 20.3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        Call
+                      </button>
+                    </div>
+                  </div>
+                }
+
+                <!-- Rating Section (for completed) -->
+                @if (booking.status === 'completed') {
+                  <div class="rating-section">
+                    <span class="rating-label">Your Rating:</span>
+                    <div class="rating-stars">
+                      @for (star of [1, 2, 3, 4, 5]; track star) {
+                        <button 
+                          class="star-btn" 
+                          [class.filled]="booking.userRating && star <= booking.userRating"
+                          (click)="rateBooking(booking, star)">
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                          </svg>
+                        </button>
+                      }
+                    </div>
+                  </div>
+                }
+
+                <!-- Cancellation Reason -->
+                @if (booking.status === 'cancelled' && booking.cancellationReason) {
+                  <div class="reason-box reason-box--cancelled">
+                    <span class="reason-label">Cancellation Reason:</span>
+                    <p>{{ booking.cancellationReason }}</p>
+                  </div>
+                }
+
+                <!-- Rejection Reason -->
+                @if (booking.status === 'rejected' && booking.rejectionReason) {
+                  <div class="reason-box reason-box--rejected">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                      <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                      <path d="M12 8V12M12 16H12.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                    <div>
+                      <span class="reason-label">Rejection Reason:</span>
+                      <p>{{ booking.rejectionReason }}</p>
+                    </div>
+                  </div>
+                }
+              </div>
+
+              <!-- Card Footer -->
+              <div class="booking-card__footer">
+                <span class="booked-date">Booked on {{ (booking.bookedDate || '') | dateFormat }}</span>
+                <div class="booking-card__actions">
+                  <button class="btn-link" (click)="viewDetails(booking)">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                      <path d="M1 12C1 12 5 4 12 4C19 4 23 12 23 12C23 12 19 20 12 20C5 20 1 12 1 12Z" stroke="currentColor" stroke-width="2"/>
+                      <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/>
+                    </svg>
+                    View Details
+                  </button>
+                  @if (booking.status === 'pending' && booking.canModify) {
+                    <button class="btn-link btn-link--primary" (click)="modifyBooking(booking)">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                        <path d="M11 4H4C3.46957 4 2.96086 4.21071 2.58579 4.58579C2.21071 4.96086 2 5.46957 2 6V20C2 20.5304 2.21071 21.0391 2.58579 21.4142C2.96086 21.7893 3.46957 22 4 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        <path d="M18.5 2.5C18.89 2.11 19.42 1.89 19.98 1.89C20.54 1.89 21.07 2.11 21.46 2.5C21.85 2.89 22.07 3.42 22.07 3.98C22.07 4.54 21.85 5.07 21.46 5.46L12 14.92L8 16L9.08 12L18.5 2.5Z" stroke="currentColor" stroke-width="2"/>
+                      </svg>
+                      Modify Booking
+                    </button>
+                  }
+                  @if (booking.status === 'completed') {
+                    <button class="btn-link btn-link--primary" (click)="bookAgain(booking)">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                        <path d="M21 12C21 16.97 16.97 21 12 21C7.03 21 3 16.97 3 12C3 7.03 7.03 3 12 3C14.12 3 16.07 3.74 17.62 4.97" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        <path d="M21 3V9H15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                      Book Again
+                    </button>
+                  }
+                  @if (booking.status === 'cancelled' || booking.status === 'rejected') {
+                    <button class="btn-link btn-link--primary" (click)="rebookService(booking)">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                        <path d="M21 12C21 16.97 16.97 21 12 21C7.03 21 3 16.97 3 12C3 7.03 7.03 3 12 3C14.12 3 16.07 3.74 17.62 4.97" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        <path d="M21 3V9H15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                      Rebook Service
+                    </button>
+                  }
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  </main>
+
+  <!-- View Details Modal -->
+  @if (isViewDetailsOpen() && selectedBooking()) {
+    <div class="modal-overlay" (click)="closeViewDetails()">
+      <div class="view-details-modal" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2>Booking Details</h2>
+          <button class="close-btn" (click)="closeViewDetails()">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </button>
+        </div>
+        
+        <div class="modal-body">
+          <!-- Service & Status -->
+          <div class="detail-section">
+            <div class="detail-row service-row">
+              <div class="service-info">
+                <div class="service-icon">
+                  <img [src]="selectedBooking()?.serviceIcon || 'assets/images/services/default-icon.png'" alt="Service" />
+                </div>
+                <div>
+                  <h3>{{ selectedBooking()?.serviceName }}</h3>
+                  <span class="booking-id">Booking ID: {{ selectedBooking()?.id }}</span>
+                </div>
+              </div>
+              <span class="status-badge" [class]="getStatusClass(selectedBooking()?.status || '')">
+                <span class="status-dot"></span>
+                {{ getStatusLabel(selectedBooking()?.status || '') }}
+              </span>
+            </div>
+          </div>
+
+          <!-- Schedule Details -->
+          <div class="detail-section">
+            <h4>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                <rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" stroke-width="2"/>
+                <path d="M16 2V6M8 2V6M3 10H21" stroke="currentColor" stroke-width="2"/>
+              </svg>
+              Schedule Details
+            </h4>
+            <div class="detail-grid">
+              <div class="detail-item">
+                <span class="label">Date:</span>
+                <span class="value">{{ formatDate(selectedBooking()?.scheduledDate || '') }}</span>
+              </div>
+              <div class="detail-item">
+                <span class="label">Time Slot:</span>
+                <span class="value">{{ formatTime(selectedBooking()?.scheduledTime || '') }}</span>
+              </div>
+              <div class="detail-item">
+                <span class="label">Duration:</span>
+                <span class="value">{{ selectedBooking()?.duration }} hours</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Service Address -->
+          <div class="detail-section">
+            <h4>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                <path d="M21 10C21 17 12 23 12 23C12 23 3 17 3 10C3 5 7 1 12 1C17 1 21 5 21 10Z" stroke="currentColor" stroke-width="2"/>
+                <circle cx="12" cy="10" r="3" stroke="currentColor" stroke-width="2"/>
+              </svg>
+              Service Address
+            </h4>
+            <p class="address-text">{{ selectedBooking()?.address }}</p>
+          </div>
+
+          <!-- Expert Details -->
+          @if (selectedBooking()?.expert) {
+            <div class="detail-section">
+              <h4>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                  <path d="M12 12C14.7614 12 17 9.76142 17 7C17 4.23858 14.7614 2 12 2C9.23858 2 7 4.23858 7 7C7 9.76142 9.23858 12 12 12Z" stroke="currentColor" stroke-width="2"/>
+                  <path d="M20 21C20 16.5817 16.4183 13 12 13C7.58172 13 4 16.5817 4 21" stroke="currentColor" stroke-width="2"/>
+                </svg>
+                Service Expert
+              </h4>
+              <div class="expert-detail">
+                <div class="expert-avatar">
+                  <img [src]="selectedBooking()?.expert?.avatar || 'assets/images/default-avatar.png'" alt="Expert" />
+                </div>
+                <div class="expert-info-detail">
+                  <span class="name">{{ selectedBooking()?.expert?.name }}</span>
+                  <span class="phone">{{ selectedBooking()?.expert?.phone }}</span>
+                </div>
+              </div>
+            </div>
+          }
+
+          <!-- OTP Verification Code - Always show if OTP exists and booking not completed/cancelled -->
+          @if (selectedBooking()?.otp) {
+            <div class="detail-section otp-section">
+              <h4>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                  <rect x="3" y="11" width="18" height="11" rx="2" stroke="currentColor" stroke-width="2"/>
+                  <path d="M7 11V7C7 4.23858 9.23858 2 12 2C14.7614 2 17 4.23858 17 7V11" stroke="currentColor" stroke-width="2"/>
+                </svg>
+                Verification OTP
+              </h4>
+              <div class="otp-display">
+                <p class="otp-info">Share this OTP with the service expert to start the work</p>
+                <div class="otp-code">
+                  @for (digit of selectedBooking()!.otp!.split(''); track $index) {
+                    <span class="otp-digit">{{ digit }}</span>
+                  }
+                </div>
+                <p class="otp-warning">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                    <path d="M12 9V13M12 17H12.01M10.29 3.86L1.82 18A2 2 0 003.54 21H20.46A2 2 0 0022.18 18L13.71 3.86A2 2 0 0010.29 3.86Z" stroke="currentColor" stroke-width="2"/>
+                  </svg>
+                  Do not share this OTP until the expert arrives
+                </p>
+              </div>
+            </div>
+          }
+
+          <!-- Payment Details -->
+          <div class="detail-section">
+            <h4>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                <rect x="1" y="4" width="22" height="16" rx="2" stroke="currentColor" stroke-width="2"/>
+                <path d="M1 10H23" stroke="currentColor" stroke-width="2"/>
+              </svg>
+              Payment Details
+            </h4>
+            <div class="detail-grid">
+              <div class="detail-item">
+                <span class="label">Total Amount:</span>
+                <span class="value amount">₹{{ selectedBooking()?.totalAmount }}</span>
+              </div>
+              <div class="detail-item">
+                <span class="label">Payment Status:</span>
+                <span class="value" [class]="'payment-status--' + selectedBooking()?.paymentStatus">
+                  {{ (selectedBooking()?.paymentStatus === 'paid' || selectedBooking()?.paymentStatus === 'completed') ? 'Paid' : selectedBooking()?.paymentStatus === 'refunded' ? 'Refunded' : 'Pending' }}
+                </span>
+              </div>
+              @if (selectedBooking()?.otp) {
+                <div class="detail-item">
+                  <span class="label">Service OTP:</span>
+                  <span class="value otp-value">{{ selectedBooking()?.otp }}</span>
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn-secondary" (click)="closeViewDetails()">Close</button>
+          @if (selectedBooking()?.status === 'pending' && selectedBooking()?.canModify) {
+            <button class="btn-primary" (click)="modifyBooking(selectedBooking()!); closeViewDetails()">Modify Booking</button>
+          }
+        </div>
+      </div>
+    </div>
+  }
+</div>

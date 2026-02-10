@@ -1,7 +1,12 @@
-import { Component, ViewChild, ElementRef } from '@angular/core';
+import { Component, ViewChild, ElementRef, OnInit, OnDestroy, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, Router } from '@angular/router';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
+import { Store } from '@ngrx/store';
+import { Subject, takeUntil, filter } from 'rxjs';
+import { AuthActions } from '../../../core/store/auth/auth.actions';
+import { selectAuthLoading, selectAuthError, selectRegistrationSuccess } from '../../../core/store/auth/auth.selectors';
+import { NotificationService } from '../../../core/services/notification.service';
 
 interface ServiceOption {
   id: string;
@@ -28,7 +33,13 @@ interface IdTypeOption {
   templateUrl: './register-expert.component.html',
   styleUrl: './register-expert.component.scss'
 })
-export class RegisterExpertComponent {
+export class RegisterExpertComponent implements OnInit, OnDestroy {
+  private readonly store = inject(Store);
+  private readonly fb = inject(FormBuilder);
+  private readonly router = inject(Router);
+  private readonly notification = inject(NotificationService);
+  private readonly destroy$ = new Subject<void>();
+
   currentStep = 1;
   totalSteps = 3;
   
@@ -40,6 +51,10 @@ export class RegisterExpertComponent {
   
   // Step 3: ID Verification Form
   idVerificationForm: FormGroup;
+
+  // Loading and error states
+  isLoading = signal(false);
+  errorMessage = signal('');
 
   // Service options
   services: ServiceOption[] = [
@@ -107,7 +122,7 @@ export class RegisterExpertComponent {
 
   @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
 
-  constructor(private fb: FormBuilder, private router: Router) {
+  constructor() {
     // Initialize forms
     this.personalInfoForm = this.fb.group({
       fullName: ['', [Validators.required, Validators.minLength(2)]],
@@ -132,6 +147,35 @@ export class RegisterExpertComponent {
       idNumber: ['', Validators.required],
       idDocument: ['']
     });
+  }
+
+  ngOnInit(): void {
+    // Subscribe to loading state
+    this.store.select(selectAuthLoading).pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(loading => this.isLoading.set(loading));
+
+    // Subscribe to auth errors
+    this.store.select(selectAuthError).pipe(
+      takeUntil(this.destroy$),
+      filter(error => error !== null)
+    ).subscribe(error => {
+      this.errorMessage.set(error || '');
+    });
+
+    // Handle successful registration
+    this.store.select(selectRegistrationSuccess).pipe(
+      takeUntil(this.destroy$),
+      filter(success => success === true)
+    ).subscribe(() => {
+      this.notification.success('Registration Successful', 'Your expert account has been created. Please log in.');
+      this.router.navigate(['/login'], { queryParams: { role: 'expert' } });
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   // Toggle service selection
@@ -193,6 +237,13 @@ export class RegisterExpertComponent {
 
   // Submit registration
   onSubmit(): void {
+    if (!this.canSubmit()) {
+      this.notification.warning('Incomplete Form', 'Please complete all required fields.');
+      return;
+    }
+
+    this.errorMessage.set('');
+    
     const registrationData = {
       personalInfo: this.personalInfoForm.value,
       serviceProfile: {
@@ -204,9 +255,9 @@ export class RegisterExpertComponent {
       },
       idVerification: this.idVerificationForm.value
     };
-    console.log('Registration submitted:', registrationData);
-    // Navigate to success or login page
-    this.router.navigate(['/login'], { queryParams: { role: 'expert' } });
+    
+    // Dispatch register action
+    this.store.dispatch(AuthActions.registerExpert({ data: registrationData }));
   }
 
   // Check if step is completed

@@ -1,9 +1,15 @@
-import { Component, OnInit, signal, computed } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, Router } from '@angular/router';
-import { AuthService } from '../../../core/services/auth.service';
-import { BookingService, Booking } from '../../../core/services/booking.service';
+import { Store } from '@ngrx/store';
+import { Subject, takeUntil, filter } from 'rxjs';
+import { BookingService } from '../../../core/services/booking.service';
 import { NavbarComponent } from '../../../shared/components/navbar/navbar.component';
+import { NotificationService } from '../../../core/services/notification.service';
+import { AuthActions } from '../../../core/store/auth/auth.actions';
+import { BookingActions, Booking } from '../../../core/store/booking/booking.actions';
+import { selectUser } from '../../../core/store/auth/auth.selectors';
+import { selectUpcomingBookings, selectBookingLoading } from '../../../core/store/booking/booking.selectors';
 
 interface FAQ {
   id: string;
@@ -18,7 +24,13 @@ interface FAQ {
   templateUrl: './customer-dashboard.component.html',
   styleUrl: './customer-dashboard.component.scss'
 })
-export class CustomerDashboardComponent implements OnInit {
+export class CustomerDashboardComponent implements OnInit, OnDestroy {
+  private readonly store = inject(Store);
+  private readonly bookingService = inject(BookingService);
+  private readonly router = inject(Router);
+  private readonly notification = inject(NotificationService);
+  private readonly destroy$ = new Subject<void>();
+
   // Signals
   isUserMenuOpen = signal(false);
   upcomingBookings = signal<Booking[]>([]);
@@ -26,11 +38,11 @@ export class CustomerDashboardComponent implements OnInit {
   faqs = signal<FAQ[]>([]);
   expandedFaq = signal<number | null>(null);
 
-  // User info
+  // User info from NgRx store
   userName = computed(() => {
-    const user = this.authService.currentUser();
-    return user?.name || 'User';
+    return this.currentUserName();
   });
+  private currentUserName = signal('User');
 
   // Hardcoded data for popular services
   popularServices = [
@@ -69,33 +81,39 @@ export class CustomerDashboardComponent implements OnInit {
     }
   ];
 
-  constructor(
-    private authService: AuthService,
-    private bookingService: BookingService,
-    private router: Router
-  ) {}
-
   ngOnInit(): void {
-    this.loadUpcomingBookings();
+    // Subscribe to user from store
+    this.store.select(selectUser).pipe(
+      takeUntil(this.destroy$),
+      filter(user => user !== null)
+    ).subscribe(user => {
+      if (user) {
+        this.currentUserName.set(user.name || 'User');
+        // Dispatch action to load bookings
+        this.store.dispatch(BookingActions.loadBookings({ customerId: user.id }));
+      }
+    });
+
+    // Subscribe to upcoming bookings from store
+    this.store.select(selectUpcomingBookings).pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(bookings => {
+      this.upcomingBookings.set(bookings);
+    });
+
+    // Subscribe to loading state
+    this.store.select(selectBookingLoading).pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(loading => {
+      this.isLoadingBookings.set(loading);
+    });
+
     this.loadFaqs();
   }
 
-  loadUpcomingBookings(): void {
-    this.isLoadingBookings.set(true);
-    const user = this.authService.currentUser();
-    if (user) {
-      this.bookingService.getUpcomingBookings(user.id).subscribe({
-        next: (bookings) => {
-          this.upcomingBookings.set(bookings);
-          this.isLoadingBookings.set(false);
-        },
-        error: () => {
-          this.isLoadingBookings.set(false);
-        }
-      });
-    } else {
-      this.isLoadingBookings.set(false);
-    }
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   loadFaqs(): void {
@@ -126,6 +144,35 @@ export class CustomerDashboardComponent implements OnInit {
     return `${day} ${month}, ${weekday}`;
   }
 
+  formatTimeSlot(timeSlot: string): string {
+    if (!timeSlot) return '';
+    const [start] = timeSlot.split('-');
+    const [hours, minutes] = start.split(':');
+    const hour = parseInt(hours);
+    const ampm = hour >= 12 ? 'PM' : 'AM';
+    const hour12 = hour % 12 || 12;
+    return `${hour12}:${minutes} ${ampm}`;
+  }
+
+  viewBookingDetails(booking: Booking): void {
+    this.router.navigate(['/customer/bookings'], { 
+      queryParams: { bookingId: booking.id, action: 'view' } 
+    });
+  }
+
+  modifyBooking(booking: Booking): void {
+    this.router.navigate(['/customer/book-service'], {
+      queryParams: {
+        mode: 'modify',
+        bookingId: booking.id
+      },
+      state: { 
+        booking: booking,
+        expertId: booking.expertId
+      }
+    });
+  }
+
   bookService(serviceId?: string): void {
     if (serviceId) {
       this.router.navigate(['/customer/book-service'], { queryParams: { service: serviceId } });
@@ -135,6 +182,6 @@ export class CustomerDashboardComponent implements OnInit {
   }
 
   logout(): void {
-    this.authService.logout();
+    this.store.dispatch(AuthActions.logout());
   }
 }

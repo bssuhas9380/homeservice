@@ -11,7 +11,15 @@
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
         <path d="M9 18L15 12L9 6" stroke="currentColor" stroke-width="2"/>
       </svg>
-      <span class="breadcrumb__active">Book a Service</span>
+      @if (isModifyMode()) {
+        <a routerLink="/customer/bookings">My Bookings</a>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+          <path d="M9 18L15 12L9 6" stroke="currentColor" stroke-width="2"/>
+        </svg>
+        <span class="breadcrumb__active">Modify Booking</span>
+      } @else {
+        <span class="breadcrumb__active">Book a Service</span>
+      }
       @if (isAddingNewAddress()) {
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
           <path d="M9 18L15 12L9 6" stroke="currentColor" stroke-width="2"/>
@@ -23,11 +31,23 @@
     <!-- Page Header -->
     <div class="page-header">
       <div>
-        <h1 class="page-header__title">BOOK A SERVICE</h1>
-        <p class="page-header__subtitle">Find a trusted expert for all your household needs</p>
+        <h1 class="page-header__title">{{ isModifyMode() ? 'MODIFY BOOKING' : 'BOOK A SERVICE' }}</h1>
+        <p class="page-header__subtitle">{{ isModifyMode() ? 'Update your booking details and preferences' : 'Find a trusted expert for all your household needs' }}</p>
       </div>
       <button class="btn-next" (click)="currentStep() < 4 ? nextStep() : openPaymentModal()" [disabled]="!isStepComplete(currentStep())">
-        {{ currentStep() === 4 ? 'Payment' : 'Next' }}
+        @if (currentStep() === 4) {
+          @if (isModifyMode()) {
+            @if (isAdditionalPaymentRequired()) {
+              Pay ₹{{ paymentDifference() | number:'1.0-0' }} & Update
+            } @else {
+              Update Booking
+            }
+          } @else {
+            Payment
+          }
+        } @else {
+          Next
+        }
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
           <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
         </svg>
@@ -134,10 +154,10 @@
     }
 
     <!-- Step 2 & beyond: Show accordion steps -->
-    @if (currentStep() >= 2) {
+    @if (currentStep() >= 2 || isModifyMode()) {
       <div class="steps-accordion">
         <!-- Step 1 Accordion - Select Service -->
-        <div class="accordion-step" [class.completed]="currentStep() > 1">
+        <div class="accordion-step" [class.completed]="isStepCompleted(1)" [class.active]="currentStep() === 1">
           <div class="accordion-step__header" (click)="goToStep(1)">
             <div class="accordion-step__title">
               <span>Select Service</span>
@@ -145,17 +165,83 @@
                 <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2"/>
               </svg>
             </div>
-            @if (currentStep() > 1) {
+            @if (isStepCompleted(1)) {
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" class="check-icon">
                 <circle cx="12" cy="12" r="11" fill="#10B981"/>
                 <path d="M8 12L11 15L16 9" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
             }
           </div>
+          
+          <!-- Show step 1 content in modify mode when clicked -->
+          @if (currentStep() === 1 && isModifyMode()) {
+            <div class="accordion-step__content">
+              <!-- Services Selection -->
+              <section class="services-section">
+                <h3 class="section-label">Select Service</h3>
+                <div class="services-scroll">
+                  @for (service of services(); track service.id) {
+                    <button class="service-card" [class.selected]="selectedServiceId() === service.id" (click)="selectService(service.id)">
+                      <div class="service-card__icon">
+                        <img [src]="service.icon || 'assets/images/services/default-icon.png'" [alt]="service.name" />
+                      </div>
+                      <span class="service-card__name">{{ service.name }}</span>
+                    </button>
+                  }
+                </div>
+              </section>
+
+              <!-- Experts Section -->
+              <section class="experts-section">
+                <div class="experts-header">
+                  <h3 class="section-label section-label--teal">Available Expert Near You</h3>
+                </div>
+                @if (isLoadingExperts()) {
+                  <div class="experts-loading">
+                    <div class="spinner"></div>
+                    <span>Loading experts...</span>
+                  </div>
+                } @else {
+                  <div class="experts-grid">
+                    @for (expert of experts(); track expert.id) {
+                      <button class="expert-card" [class.selected]="selectedExpert()?.id === expert.id" (click)="selectExpert(expert)">
+                        <div class="expert-card__avatar">
+                          <img [src]="expert.photo || 'assets/images/default-avatar.png'" [alt]="expert.name" />
+                        </div>
+                        <div class="expert-card__info">
+                          <div class="expert-card__row">
+                            <h4 class="expert-card__name">{{ expert.name }}</h4>
+                            @if (expert.isVerified) {
+                              <span class="verified-badge">
+                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none">
+                                  <path d="M5 12L10 17L20 7" stroke="currentColor" stroke-width="3"/>
+                                </svg>
+                                Verified
+                              </span>
+                            }
+                            <span class="expert-card__rate">₹{{ expert.hourlyRate }}/hr</span>
+                          </div>
+                          <div class="expert-card__meta">
+                            <span class="meta-item">
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" fill="#FFC107"/>
+                              </svg>
+                              {{ expert.rating }} ({{ expert.totalRatings }})
+                            </span>
+                            <span class="meta-item">{{ expert.experience }} yrs exp</span>
+                          </div>
+                        </div>
+                      </button>
+                    }
+                  </div>
+                }
+              </section>
+            </div>
+          }
         </div>
 
         <!-- Step 2 Accordion - Select Date & Time -->
-        <div class="accordion-step" [class.active]="currentStep() === 2" [class.completed]="currentStep() > 2">
+        <div class="accordion-step" [class.active]="currentStep() === 2" [class.completed]="isStepCompleted(2)">
           <div class="accordion-step__header" (click)="goToStep(2)">
             <div class="accordion-step__title">
               <span>Select Date & Time</span>
@@ -163,7 +249,7 @@
                 <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2"/>
               </svg>
             </div>
-            @if (currentStep() > 2) {
+            @if (isStepCompleted(2)) {
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" class="check-icon">
                 <circle cx="12" cy="12" r="11" fill="#10B981"/>
                 <path d="M8 12L11 15L16 9" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -279,8 +365,8 @@
         </div>
 
         <!-- Step 3 Accordion - Address Details -->
-        <div class="accordion-step" [class.active]="currentStep() >= 3" [class.completed]="currentStep() > 3">
-          <div class="accordion-step__header">
+        <div class="accordion-step" [class.active]="currentStep() === 3" [class.completed]="isStepCompleted(3)">
+          <div class="accordion-step__header" (click)="goToStep(3)">
             <div class="accordion-step__title">
               <span>Address Details</span>
             </div>
@@ -295,7 +381,7 @@
                 <button class="btn-save-address" (click)="saveNewAddress(); $event.stopPropagation()" [disabled]="!newAddressForm.valid">Save New Address</button>
               </div>
             }
-            @if (currentStep() > 3) {
+            @if (isStepCompleted(3)) {
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" class="check-icon">
                 <circle cx="12" cy="12" r="11" fill="#10B981"/>
                 <path d="M8 12L11 15L16 9" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -303,7 +389,7 @@
             }
           </div>
           
-          @if (currentStep() >= 3 && !isAddingNewAddress()) {
+          @if (currentStep() === 3 && !isAddingNewAddress()) {
             <div class="accordion-step__content">
               <div class="addresses-list">
                 @for (address of addresses(); track address.id) {
@@ -584,6 +670,56 @@
               <span>Total Amount</span>
               <span>₹{{ totalAmount() | number:'1.2-2' }}</span>
             </div>
+
+            <!-- Modify Mode: Payment Difference -->
+            @if (isModifyMode()) {
+              <div class="modify-payment-info">
+                <div class="price-row original">
+                  <span>Original Payment</span>
+                  <span>₹{{ originalBookingAmount() | number:'1.2-2' }}</span>
+                </div>
+                @if (isAdditionalPaymentRequired()) {
+                  <div class="payment-diff pay-more">
+                    <div class="payment-diff__icon">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                        <path d="M12 8V12M12 16H12.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                      </svg>
+                    </div>
+                    <div class="payment-diff__text">
+                      <strong>Additional Payment Required</strong>
+                      <p>You need to pay ₹{{ paymentDifference() | number:'1.2-2' }} more for this modification.</p>
+                    </div>
+                  </div>
+                } @else if (isRefundApplicable()) {
+                  <div class="payment-diff refund">
+                    <div class="payment-diff__icon">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                        <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="currentColor" stroke-width="2"/>
+                        <path d="M8 12L11 15L16 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                    </div>
+                    <div class="payment-diff__text">
+                      <strong>Refund Applicable</strong>
+                      <p>₹{{ -paymentDifference() | number:'1.2-2' }} will be refunded to your original payment method within 5-7 business days.</p>
+                    </div>
+                  </div>
+                } @else {
+                  <div class="payment-diff no-change">
+                    <div class="payment-diff__icon">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                        <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="currentColor" stroke-width="2"/>
+                        <path d="M8 12L11 15L16 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                    </div>
+                    <div class="payment-diff__text">
+                      <strong>No Additional Payment</strong>
+                      <p>The modified booking amount is the same as your original payment.</p>
+                    </div>
+                  </div>
+                }
+              </div>
+            }
           </div>
         </div>
       </div>

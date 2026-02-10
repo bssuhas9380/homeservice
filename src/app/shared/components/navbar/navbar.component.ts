@@ -1,7 +1,15 @@
-import { Component, inject, signal, computed, input, HostListener } from '@angular/core';
+import { Component, inject, signal, computed, input, HostListener, Input, Output, EventEmitter, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
-import { AuthService } from '../../../core/services/auth.service';
+import { Store } from '@ngrx/store';
+import { Subject, takeUntil } from 'rxjs';
+import { AuthActions } from '../../../core/store/auth/auth.actions';
+import { selectUser } from '../../../core/store/auth/auth.selectors';
+
+/** 
+ * Type for the page context
+ */
+export type NavbarPageType = 'customer' | 'expert' | 'admin';
 
 @Component({
   selector: 'app-navbar',
@@ -10,23 +18,46 @@ import { AuthService } from '../../../core/services/auth.service';
   templateUrl: './navbar.component.html',
   styleUrl: './navbar.component.scss'
 })
-export class NavbarComponent {
-  private authService = inject(AuthService);
-  private router = inject(Router);
+export class NavbarComponent implements OnInit, OnDestroy {
+  private readonly store = inject(Store);
+  private readonly router = inject(Router);
+  private readonly destroy$ = new Subject<void>();
 
-  // Input for page type (customer, expert, admin)
-  pageType = input<'customer' | 'expert' | 'admin'>('customer');
+  /**
+   * Page type determines the context of the navbar
+   * @default 'customer'
+   */
+  @Input() pageType: NavbarPageType = 'customer';
+
+  /**
+   * Event emitted when user clicks logout
+   */
+  @Output() logoutClicked = new EventEmitter<void>();
 
   isUserMenuOpen = signal(false);
+  private currentUserName = signal<string>('John Doe');
 
-  userName = computed(() => {
-    const user = this.authService.currentUser();
-    return user?.name || 'John Doe';
-  });
+  userName = computed(() => this.currentUserName());
 
   userAvatar = computed(() => {
     return 'assets/images/default-avatar.png';
   });
+
+  ngOnInit(): void {
+    // Subscribe to user from NgRx store
+    this.store.select(selectUser).pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(user => {
+      if (user) {
+        this.currentUserName.set(user.name || 'John Doe');
+      }
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
 
   toggleUserMenu(): void {
     this.isUserMenuOpen.update(v => !v);
@@ -41,7 +72,8 @@ export class NavbarComponent {
   }
 
   logout(): void {
-    this.authService.logout();
+    this.logoutClicked.emit();
+    this.store.dispatch(AuthActions.logout());
     this.router.navigate(['/login']);
   }
 }

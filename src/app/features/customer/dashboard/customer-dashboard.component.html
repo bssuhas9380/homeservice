@@ -28,37 +28,11 @@
           @if (isLoadingBookings()) {
             <div class="loading-placeholder">Loading bookings...</div>
           } @else if (upcomingBookings().length === 0) {
-            <!-- Show placeholder cards when no bookings -->
-            @for (i of [1, 2, 3]; track i) {
-              <div class="booking-card">
-                <div class="booking-card__header">
-                  <div class="booking-card__icon">
-                    <img src="assets/images/services/cleaning-icon.png" alt="Service" />
-                  </div>
-                  <span class="booking-card__price">₹299/- to pay</span>
-                </div>
-                <div class="booking-card__details">
-                  <div class="booking-card__date">31 Jan, Wednesday</div>
-                  <div class="booking-card__time">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                      <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
-                      <path d="M12 6V12L16 14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                    </svg>
-                    2.30 PM, booked for 2hrs
-                  </div>
-                  <div class="booking-card__address">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                      <path d="M21 10C21 17 12 23 12 23C12 23 3 17 3 10C3 5 7 1 12 1C17 1 21 5 21 10Z" stroke="currentColor" stroke-width="2"/>
-                    </svg>
-                    201, Manjari Khurd, Pune - 143505
-                  </div>
-                </div>
-                <div class="booking-card__actions">
-                  <a href="#" class="booking-card__link">View Details</a>
-                  <a href="#" class="booking-card__link">Modify Booking</a>
-                </div>
-              </div>
-            }
+            <!-- Show message when no bookings -->
+            <div class="no-bookings-message">
+              <p>No upcoming bookings yet.</p>
+              <button class="book-now-btn" (click)="bookService()">Book a Service</button>
+            </div>
           } @else {
             @for (booking of upcomingBookings(); track booking.id) {
               <div class="booking-card">
@@ -66,16 +40,17 @@
                   <div class="booking-card__icon">
                     <img src="assets/images/services/cleaning-icon.png" alt="Service" />
                   </div>
-                  <span class="booking-card__price">₹{{ booking.totalAmount }}/- to pay</span>
+                  <span class="booking-card__price" [class.paid]="booking.paymentStatus === 'PAID'">{{ booking.paymentStatus === 'PAID' ? 'PAID' : '₹' + booking.totalAmount + '/- to pay' }}</span>
                 </div>
                 <div class="booking-card__details">
+                  <div class="booking-card__service-name">{{ booking.serviceName }}</div>
                   <div class="booking-card__date">{{ formatBookingDate(booking.date) }}</div>
                   <div class="booking-card__time">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
                       <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
                       <path d="M12 6V12L16 14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
                     </svg>
-                    {{ booking.timeSlot }}, booked for {{ booking.duration }}hrs
+                    {{ formatTimeSlot(booking.timeSlot) }}, booked for {{ booking.duration }}hrs
                   </div>
                   <div class="booking-card__address">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
@@ -85,8 +60,10 @@
                   </div>
                 </div>
                 <div class="booking-card__actions">
-                  <a href="#" class="booking-card__link">View Details</a>
-                  <a href="#" class="booking-card__link">Modify Booking</a>
+                  <button class="booking-card__link" (click)="viewBookingDetails(booking)">View Details</button>
+                  @if (booking.status === 'PENDING') {
+                    <button class="booking-card__link" (click)="modifyBooking(booking)">Modify Booking</button>
+                  }
                 </div>
               </div>
             }

@@ -40,6 +40,7 @@ export interface Booking {
   paymentStatus: PaymentStatus;
   couponCode?: string;
   notes?: string;
+  otp?: string; // OTP for expert verification
   createdAt: string;
   updatedAt?: string;
   // Populated fields
@@ -210,17 +211,21 @@ export class BookingService {
     });
   }
 
-  // Get upcoming bookings for customer
+  // Get upcoming bookings for customer (PENDING and CONFIRMED)
   getUpcomingBookings(customerId: string): Observable<Booking[]> {
     return this.http.get<Booking[]>(`${this.API_URL}/bookings`, {
-      params: { 
-        customerId,
-        status: BookingStatus.CONFIRMED
-      }
+      params: { customerId }
     }).pipe(
       map(bookings => {
         const today = new Date();
-        return bookings.filter(b => new Date(b.date) >= today)
+        // Filter for upcoming bookings (PENDING or CONFIRMED status, future date)
+        return bookings
+          .filter(b => {
+            const bookingDate = new Date(b.date);
+            const status = (b.status as string).toUpperCase();
+            const isPendingOrConfirmed = status === 'PENDING' || status === 'CONFIRMED';
+            return isPendingOrConfirmed && bookingDate >= today;
+          })
           .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
       })
     );
@@ -277,9 +282,13 @@ export class BookingService {
 
   // Create booking
   createBooking(bookingData: Partial<Booking>): Observable<Booking> {
+    // Generate 6-digit OTP for expert verification
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    
     const booking: Partial<Booking> = {
       ...bookingData,
       id: `book-${Date.now()}`,
+      otp,
       status: BookingStatus.PENDING,
       paymentStatus: PaymentStatus.PENDING,
       createdAt: new Date().toISOString()
@@ -301,6 +310,19 @@ export class BookingService {
     return this.http.patch<Booking>(`${this.API_URL}/bookings/${bookingId}`, {
       paymentStatus,
       status: paymentStatus === PaymentStatus.PAID ? BookingStatus.CONFIRMED : undefined,
+      updatedAt: new Date().toISOString()
+    });
+  }
+
+  // Get booking by ID
+  getBookingById(bookingId: string): Observable<Booking> {
+    return this.http.get<Booking>(`${this.API_URL}/bookings/${bookingId}`);
+  }
+
+  // Update booking
+  updateBooking(bookingId: string, bookingData: Partial<Booking>): Observable<Booking> {
+    return this.http.patch<Booking>(`${this.API_URL}/bookings/${bookingId}`, {
+      ...bookingData,
       updatedAt: new Date().toISOString()
     });
   }
