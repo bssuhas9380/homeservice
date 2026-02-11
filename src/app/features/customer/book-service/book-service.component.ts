@@ -514,7 +514,7 @@ export class BookServiceComponent implements OnInit {
         discountAmount: this.appliedDiscount(),
         totalAmount: this.totalAmount(),
         couponCode: this.selectedCoupon()?.code,
-        status: BookingStatus.CONFIRMED,
+        status: BookingStatus.PENDING,
         paymentStatus: PaymentStatus.PAID
       };
 

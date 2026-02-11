@@ -17,6 +17,47 @@ export class AuthEffects {
   private readonly notificationService = inject(NotificationService);
 
   private readonly API_URL = 'http://localhost:3000';
+  private readonly TOKEN_KEY = 'housemate_access_token';
+  private readonly USER_KEY = 'housemate_user';
+  private readonly TOKEN_EXPIRY_HOURS = 24;
+
+  /** Generate a JWT-like token with expiry */
+  private generateToken(user: User): string {
+    const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
+    const payload = btoa(JSON.stringify({
+      sub: user.id,
+      email: user.email,
+      role: user.role,
+      iat: Math.floor(Date.now() / 1000),
+      exp: Math.floor(Date.now() / 1000) + (this.TOKEN_EXPIRY_HOURS * 60 * 60)
+    }));
+    const signature = btoa('housemate-secret');
+    return `${header}.${payload}.${signature}`;
+  }
+
+  /** Check if token is still valid (not expired) */
+  private isTokenValid(token: string): boolean {
+    try {
+      const parts = token.split('.');
+      if (parts.length !== 3) return false;
+      const payload = JSON.parse(atob(parts[1]));
+      return payload.exp > Math.floor(Date.now() / 1000);
+    } catch {
+      return false;
+    }
+  }
+
+  /** Store auth data in localStorage */
+  private storeAuth(token: string, user: User): void {
+    localStorage.setItem(this.TOKEN_KEY, token);
+    localStorage.setItem(this.USER_KEY, JSON.stringify(user));
+  }
+
+  /** Clear auth data from localStorage */
+  private clearAuth(): void {
+    localStorage.removeItem(this.TOKEN_KEY);
+    localStorage.removeItem(this.USER_KEY);
+  }
 
   // Login Effect
   login$ = createEffect(() =>
@@ -32,13 +73,8 @@ export class AuthEffects {
             );
             
             if (user) {
-              // Generate mock token
-              const token = btoa(JSON.stringify({ userId: user.id, timestamp: Date.now() }));
-              
-              // Store in localStorage
-              localStorage.setItem('auth_token', token);
-              localStorage.setItem('auth_user', JSON.stringify(user));
-              
+              const token = this.generateToken(user);
+              this.storeAuth(token, user);
               return AuthActions.loginSuccess({ user, token });
             }
             
@@ -107,9 +143,8 @@ export class AuthEffects {
 
             return this.http.post<User>(`${this.API_URL}/users`, newUser).pipe(
               map(user => {
-                const token = btoa(JSON.stringify({ userId: user.id, timestamp: Date.now() }));
-                localStorage.setItem('auth_token', token);
-                localStorage.setItem('auth_user', JSON.stringify(user));
+                const token = this.generateToken(user);
+                this.storeAuth(token, user);
                 return AuthActions.registerCustomerSuccess({ user, token });
               }),
               catchError(error => of(AuthActions.registerCustomerFailure({ 
@@ -182,9 +217,8 @@ export class AuthEffects {
 
             return this.http.post<User>(`${this.API_URL}/users`, newUser).pipe(
               map(user => {
-                const token = btoa(JSON.stringify({ userId: user.id, timestamp: Date.now() }));
-                localStorage.setItem('auth_token', token);
-                localStorage.setItem('auth_user', JSON.stringify(user));
+                const token = this.generateToken(user);
+                this.storeAuth(token, user);
                 return AuthActions.registerExpertSuccess({ user, token });
               }),
               catchError(error => of(AuthActions.registerExpertFailure({ 
@@ -228,8 +262,7 @@ export class AuthEffects {
     this.actions$.pipe(
       ofType(AuthActions.logout),
       tap(() => {
-        localStorage.removeItem('auth_token');
-        localStorage.removeItem('auth_user');
+        this.clearAuth();
       }),
       map(() => AuthActions.logoutSuccess())
     )
@@ -247,19 +280,24 @@ export class AuthEffects {
     { dispatch: false }
   );
 
-  // Check Session Effect
+  // Check Session Effect - validates token expiry
   checkSession$ = createEffect(() =>
     this.actions$.pipe(
       ofType(AuthActions.checkSession),
       map(() => {
-        const token = localStorage.getItem('auth_token');
-        const userJson = localStorage.getItem('auth_user');
+        const token = localStorage.getItem(this.TOKEN_KEY);
+        const userJson = localStorage.getItem(this.USER_KEY);
 
         if (token && userJson) {
           try {
+            if (!this.isTokenValid(token)) {
+              this.clearAuth();
+              return AuthActions.sessionInvalid();
+            }
             const user = JSON.parse(userJson) as User;
             return AuthActions.sessionValid({ user, token });
           } catch {
+            this.clearAuth();
             return AuthActions.sessionInvalid();
           }
         }
@@ -273,7 +311,7 @@ export class AuthEffects {
     this.actions$.pipe(
       ofType(AuthActions.updateProfile),
       exhaustMap(({ data }) => {
-        const userJson = localStorage.getItem('auth_user');
+        const userJson = localStorage.getItem(this.USER_KEY);
         if (!userJson) {
           return of(AuthActions.updateProfileFailure({ error: 'Not authenticated' }));
         }
@@ -282,7 +320,7 @@ export class AuthEffects {
 
         return this.http.patch<User>(`${this.API_URL}/users/${currentUser.id}`, data).pipe(
           map(updatedUser => {
-            localStorage.setItem('auth_user', JSON.stringify(updatedUser));
+            localStorage.setItem(this.USER_KEY, JSON.stringify(updatedUser));
             return AuthActions.updateProfileSuccess({ user: updatedUser });
           }),
           catchError(error => of(AuthActions.updateProfileFailure({ 

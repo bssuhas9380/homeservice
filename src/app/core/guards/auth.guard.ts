@@ -10,17 +10,30 @@ import {
   UrlSegment
 } from '@angular/router';
 import { Store } from '@ngrx/store';
-import { map, take } from 'rxjs/operators';
+import { map, take, filter, switchMap } from 'rxjs/operators';
 import { Observable } from 'rxjs';
-import { selectIsAuthenticated, selectIsCustomer, selectIsExpert, selectUser } from '../store/auth/auth.selectors';
+import { selectIsAuthenticated, selectIsCustomer, selectIsExpert, selectUser, selectAuthState } from '../store/auth/auth.selectors';
 import { UserRole } from '../models/user.model';
 import { NotificationService } from '../services/notification.service';
+import { AuthActions } from '../store/auth/auth.actions';
 
 /**
  * Interface for components that need unsaved changes confirmation
  */
 export interface CanComponentDeactivate {
   canDeactivate: () => Observable<boolean> | Promise<boolean> | boolean;
+}
+
+/**
+ * Helper: waits for auth state to finish loading, then returns isAuthenticated.
+ * This ensures checkSession() from AppComponent has resolved before guarding.
+ */
+function waitForAuth(store: Store): Observable<boolean> {
+  return store.select(selectAuthState).pipe(
+    filter(state => !state.isLoading),
+    take(1),
+    map(state => state.isAuthenticated)
+  );
 }
 
 // ============================================
@@ -39,8 +52,7 @@ export const authGuard: CanActivateFn = (
   const router = inject(Router);
   const notification = inject(NotificationService);
 
-  return store.select(selectIsAuthenticated).pipe(
-    take(1),
+  return waitForAuth(store).pipe(
     map(isAuthenticated => {
       if (isAuthenticated) {
         return true;
@@ -66,8 +78,7 @@ export const customerGuard: CanActivateFn = (
   const router = inject(Router);
   const notification = inject(NotificationService);
 
-  return store.select(selectIsAuthenticated).pipe(
-    take(1),
+  return waitForAuth(store).pipe(
     map(isAuthenticated => {
       if (!isAuthenticated) {
         notification.warning('Authentication Required', 'Please log in as a customer to access this page.');
@@ -93,8 +104,8 @@ export const customerRoleGuard: CanActivateFn = (
   const router = inject(Router);
   const notification = inject(NotificationService);
 
-  return store.select(selectIsCustomer).pipe(
-    take(1),
+  return waitForAuth(store).pipe(
+    switchMap(() => store.select(selectIsCustomer).pipe(take(1))),
     map(isCustomer => {
       if (isCustomer) {
         return true;
@@ -118,8 +129,7 @@ export const expertGuard: CanActivateFn = (
   const router = inject(Router);
   const notification = inject(NotificationService);
 
-  return store.select(selectIsAuthenticated).pipe(
-    take(1),
+  return waitForAuth(store).pipe(
     map(isAuthenticated => {
       if (!isAuthenticated) {
         notification.warning('Authentication Required', 'Please log in as an expert to access this page.');
@@ -145,8 +155,8 @@ export const expertRoleGuard: CanActivateFn = (
   const router = inject(Router);
   const notification = inject(NotificationService);
 
-  return store.select(selectIsExpert).pipe(
-    take(1),
+  return waitForAuth(store).pipe(
+    switchMap(() => store.select(selectIsExpert).pipe(take(1))),
     map(isExpert => {
       if (isExpert) {
         return true;
@@ -169,8 +179,8 @@ export const guestGuard: CanActivateFn = (
   const store = inject(Store);
   const router = inject(Router);
 
-  return store.select(selectUser).pipe(
-    take(1),
+  return waitForAuth(store).pipe(
+    switchMap(() => store.select(selectUser).pipe(take(1))),
     map(user => {
       if (!user) {
         return true;
@@ -203,8 +213,8 @@ export const authMatchGuard: CanMatchFn = (
 ): Observable<boolean> => {
   const store = inject(Store);
 
-  return store.select(selectIsAuthenticated).pipe(
-    take(1)
+  return waitForAuth(store).pipe(
+    switchMap(() => store.select(selectIsAuthenticated).pipe(take(1)))
   );
 };
 
@@ -217,8 +227,8 @@ export const customerMatchGuard: CanMatchFn = (
 ): Observable<boolean> => {
   const store = inject(Store);
 
-  return store.select(selectIsCustomer).pipe(
-    take(1)
+  return waitForAuth(store).pipe(
+    switchMap(() => store.select(selectIsCustomer).pipe(take(1)))
   );
 };
 
@@ -231,8 +241,8 @@ export const expertMatchGuard: CanMatchFn = (
 ): Observable<boolean> => {
   const store = inject(Store);
 
-  return store.select(selectIsExpert).pipe(
-    take(1)
+  return waitForAuth(store).pipe(
+    switchMap(() => store.select(selectIsExpert).pipe(take(1)))
   );
 };
 
@@ -245,8 +255,8 @@ export const guestMatchGuard: CanMatchFn = (
 ): Observable<boolean> => {
   const store = inject(Store);
 
-  return store.select(selectIsAuthenticated).pipe(
-    take(1),
+  return waitForAuth(store).pipe(
+    switchMap(() => store.select(selectIsAuthenticated).pipe(take(1))),
     map(isAuthenticated => !isAuthenticated)
   );
 };
