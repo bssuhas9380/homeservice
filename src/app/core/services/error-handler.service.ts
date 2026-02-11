@@ -41,7 +41,7 @@ export class ErrorHandlerService {
     }
 
     // Timeout error
-    if (error.status === 408 || error.name === 'TimeoutError') {
+    if (error.status === 408 || (error.name as string) === 'TimeoutError') {
       return {
         status: 408,
         message: ERROR_MESSAGES.NETWORK.TIMEOUT,
