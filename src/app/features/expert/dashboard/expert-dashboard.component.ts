@@ -11,8 +11,8 @@ import { AuthActions } from '../../../core/store/auth/auth.actions';
 import { BookingActions, Booking, BookingStatus } from '../../../core/store/booking/booking.actions';
 import { selectUser } from '../../../core/store/auth/auth.selectors';
 import { 
-  selectAllBookings, 
-  selectBookingLoading, 
+  selectExpertBookings, 
+  selectExpertBookingsLoading, 
   selectPendingBookings,
   selectExpertBookingCounts 
 } from '../../../core/store/booking/booking.selectors';
@@ -146,8 +146,8 @@ export class ExpertDashboardComponent implements OnInit, OnDestroy {
       }
     });
 
-    // Subscribe to all bookings
-    this.store.select(selectAllBookings).pipe(
+    // Subscribe to expert bookings (separate from customer bookings)
+    this.store.select(selectExpertBookings).pipe(
       takeUntil(this.destroy$)
     ).subscribe(bookings => {
       this.allBookings.set(bookings);
@@ -167,8 +167,8 @@ export class ExpertDashboardComponent implements OnInit, OnDestroy {
       this.bookingCounts.set(counts);
     });
 
-    // Subscribe to loading state
-    this.store.select(selectBookingLoading).pipe(
+    // Subscribe to expert loading state
+    this.store.select(selectExpertBookingsLoading).pipe(
       takeUntil(this.destroy$)
     ).subscribe(loading => {
       this.isLoadingBookings.set(loading);

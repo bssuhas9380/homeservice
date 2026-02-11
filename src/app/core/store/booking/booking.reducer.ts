@@ -9,6 +9,9 @@ export interface BookingState extends EntityState<Booking> {
   error: string | null;
   createSuccess: boolean;
   updateSuccess: boolean;
+  // Separate expert bookings state
+  expertBookings: Booking[];
+  expertBookingsLoading: boolean;
 }
 
 export const bookingAdapter: EntityAdapter<Booking> = createEntityAdapter<Booking>({
@@ -21,7 +24,9 @@ export const initialBookingState: BookingState = bookingAdapter.getInitialState(
   isLoading: false,
   error: null,
   createSuccess: false,
-  updateSuccess: false
+  updateSuccess: false,
+  expertBookings: [],
+  expertBookingsLoading: false
 });
 
 export const bookingReducer = createReducer(
@@ -170,72 +175,63 @@ export const bookingReducer = createReducer(
     error
   })),
 
-  // Load Expert Bookings
+  // Load Expert Bookings — stored separately from customer bookings
   on(BookingActions.loadExpertBookings, (state) => ({
     ...state,
-    isLoading: true,
+    expertBookingsLoading: true,
     error: null
   })),
 
-  on(BookingActions.loadExpertBookingsSuccess, (state, { bookings }) => 
-    bookingAdapter.setAll(bookings, {
-      ...state,
-      isLoading: false,
-      error: null
-    })
-  ),
+  on(BookingActions.loadExpertBookingsSuccess, (state, { bookings }) => ({
+    ...state,
+    expertBookings: bookings,
+    expertBookingsLoading: false,
+    error: null
+  })),
 
   on(BookingActions.loadExpertBookingsFailure, (state, { error }) => ({
     ...state,
-    isLoading: false,
+    expertBookingsLoading: false,
     error
   })),
 
-  // Accept Booking
+  // Accept Booking — update in expertBookings array
   on(BookingActions.acceptBooking, (state) => ({
     ...state,
-    isLoading: true,
+    expertBookingsLoading: true,
     error: null
   })),
 
-  on(BookingActions.acceptBookingSuccess, (state, { booking }) => 
-    bookingAdapter.updateOne(
-      { id: booking.id, changes: booking },
-      {
-        ...state,
-        isLoading: false,
-        error: null
-      }
-    )
-  ),
+  on(BookingActions.acceptBookingSuccess, (state, { booking }) => ({
+    ...state,
+    expertBookings: state.expertBookings.map(b => b.id === booking.id ? booking : b),
+    expertBookingsLoading: false,
+    error: null
+  })),
 
   on(BookingActions.acceptBookingFailure, (state, { error }) => ({
     ...state,
-    isLoading: false,
+    expertBookingsLoading: false,
     error
   })),
 
-  // Reject Booking
+  // Reject Booking — update in expertBookings array
   on(BookingActions.rejectBooking, (state) => ({
     ...state,
-    isLoading: true,
+    expertBookingsLoading: true,
     error: null
   })),
 
-  on(BookingActions.rejectBookingSuccess, (state, { booking }) => 
-    bookingAdapter.updateOne(
-      { id: booking.id, changes: booking },
-      {
-        ...state,
-        isLoading: false,
-        error: null
-      }
-    )
-  ),
+  on(BookingActions.rejectBookingSuccess, (state, { booking }) => ({
+    ...state,
+    expertBookings: state.expertBookings.map(b => b.id === booking.id ? booking : b),
+    expertBookingsLoading: false,
+    error: null
+  })),
 
   on(BookingActions.rejectBookingFailure, (state, { error }) => ({
     ...state,
-    isLoading: false,
+    expertBookingsLoading: false,
     error
   })),
 

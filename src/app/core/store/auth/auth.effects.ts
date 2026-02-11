@@ -177,14 +177,21 @@ export class AuthEffects {
     this.actions$.pipe(
       ofType(AuthActions.registerExpert),
       exhaustMap(({ data }) => {
-        // Extract email from personal info - expert registration uses different structure
-        const email = (data as any).email || (data.personalInfo as any)?.email || '';
+        // Extract email and password from personal info
+        const email = data.personalInfo?.email || '';
+        const password = data.personalInfo?.password || '';
+        
+        if (!email) {
+          return of(AuthActions.registerExpertFailure({ 
+            error: 'Email is required for registration' 
+          }));
+        }
         
         return this.http.get<User[]>(`${this.API_URL}/users`, {
           params: { email }
         }).pipe(
           exhaustMap(existingUsers => {
-            if (existingUsers.length > 0 && email) {
+            if (existingUsers.length > 0) {
               return of(AuthActions.registerExpertFailure({ 
                 error: ERROR_MESSAGES.AUTH.EMAIL_EXISTS 
               }));
@@ -195,6 +202,7 @@ export class AuthEffects {
               name: data.personalInfo?.fullName,
               phone: data.personalInfo?.mobileNumber,
               email: email,
+              password: password,
               role: 'EXPERT',
               skills: data.serviceProfile?.services || [],
               experience: parseInt(data.serviceProfile?.experienceYears || '0'),

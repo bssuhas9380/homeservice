@@ -45,6 +45,8 @@ export interface RegisterCustomerData {
 export interface RegisterExpertData {
   personalInfo: {
     fullName: string;
+    email: string;
+    password: string;
     mobileNumber: string;
     dateOfBirth: string;
     address: string;

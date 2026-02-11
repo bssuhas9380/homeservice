@@ -1,11 +1,11 @@
 import { Component, ViewChild, ElementRef, OnInit, OnDestroy, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink, Router } from '@angular/router';
+import { RouterLink } from '@angular/router';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { Subject, takeUntil, filter } from 'rxjs';
 import { AuthActions } from '../../../core/store/auth/auth.actions';
-import { selectAuthLoading, selectAuthError, selectRegistrationSuccess } from '../../../core/store/auth/auth.selectors';
+import { selectAuthLoading, selectAuthError } from '../../../core/store/auth/auth.selectors';
 import { NotificationService } from '../../../core/services/notification.service';
 
 interface ServiceOption {
@@ -36,7 +36,6 @@ interface IdTypeOption {
 export class RegisterExpertComponent implements OnInit, OnDestroy {
   private readonly store = inject(Store);
   private readonly fb = inject(FormBuilder);
-  private readonly router = inject(Router);
   private readonly notification = inject(NotificationService);
   private readonly destroy$ = new Subject<void>();
 
@@ -126,6 +125,8 @@ export class RegisterExpertComponent implements OnInit, OnDestroy {
     // Initialize forms
     this.personalInfoForm = this.fb.group({
       fullName: ['', [Validators.required, Validators.minLength(2)]],
+      email: ['', [Validators.required, Validators.email]],
+      password: ['', [Validators.required, Validators.minLength(6)]],
       mobileNumber: ['', [Validators.required, Validators.pattern(/^[0-9]{10}$/)]],
       dateOfBirth: ['', Validators.required],
       address: ['', Validators.required],
@@ -161,15 +162,6 @@ export class RegisterExpertComponent implements OnInit, OnDestroy {
       filter(error => error !== null)
     ).subscribe(error => {
       this.errorMessage.set(error || '');
-    });
-
-    // Handle successful registration
-    this.store.select(selectRegistrationSuccess).pipe(
-      takeUntil(this.destroy$),
-      filter(success => success === true)
-    ).subscribe(() => {
-      this.notification.success('Registration Successful', 'Your expert account has been created. Please log in.');
-      this.router.navigate(['/login'], { queryParams: { role: 'expert' } });
     });
   }
 
@@ -329,7 +321,6 @@ export class RegisterExpertComponent implements OnInit, OnDestroy {
   canSubmit(): boolean {
     return this.selectedIdType !== '' && 
            this.idVerificationForm.get('idNumber')?.valid === true && 
-           this.uploadedFileName !== '' && 
            this.termsAccepted;
   }
 }

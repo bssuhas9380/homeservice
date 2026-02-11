@@ -104,19 +104,31 @@ export const selectBookingById = (bookingId: string) => createSelector(
   (entities) => entities[bookingId]
 );
 
-// Expert-specific selectors
+// ========== Expert-specific selectors (separate state) ==========
+
+// All expert bookings from the dedicated expertBookings array
+export const selectExpertBookings = createSelector(
+  selectBookingState,
+  (state) => state.expertBookings
+);
+
+export const selectExpertBookingsLoading = createSelector(
+  selectBookingState,
+  (state) => state.expertBookingsLoading
+);
+
 export const selectPendingBookings = createSelector(
-  selectAllBookings,
+  selectExpertBookings,
   (bookings) => bookings.filter(b => b.status === BookingStatus.PENDING)
 );
 
 export const selectConfirmedBookings = createSelector(
-  selectAllBookings,
+  selectExpertBookings,
   (bookings) => bookings.filter(b => b.status === BookingStatus.CONFIRMED)
 );
 
 export const selectExpertBookingCounts = createSelector(
-  selectAllBookings,
+  selectExpertBookings,
   (bookings) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);

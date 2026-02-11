@@ -549,7 +549,7 @@ export const routes: Routes = [
       }
     ]
   },
-  // Expert Routes (placeholder for future)
+  // Expert Routes
   {
     path: 'expert',
     canMatch: [expertMatchGuard],
@@ -557,7 +557,7 @@ export const routes: Routes = [
     children: [
       {
         path: 'dashboard',
-        loadComponent: () => import('./features/customer/dashboard/customer-dashboard.component').then(m => m.CustomerDashboardComponent), // Placeholder
+        loadComponent: () => import('./features/expert/dashboard/expert-dashboard.component').then(m => m.ExpertDashboardComponent),
         title: 'Expert Dashboard - HouseMate'
       },
       {
@@ -2482,6 +2482,8 @@ export interface RegisterCustomerData {
 export interface RegisterExpertData {
   personalInfo: {
     fullName: string;
+    email: string;
+    password: string;
     mobileNumber: string;
     dateOfBirth: string;
     address: string;
@@ -2830,14 +2832,21 @@ export class AuthEffects {
     this.actions$.pipe(
       ofType(AuthActions.registerExpert),
       exhaustMap(({ data }) => {
-        // Extract email from personal info - expert registration uses different structure
-        const email = (data as any).email || (data.personalInfo as any)?.email || '';
+        // Extract email and password from personal info
+        const email = data.personalInfo?.email || '';
+        const password = data.personalInfo?.password || '';
+        
+        if (!email) {
+          return of(AuthActions.registerExpertFailure({ 
+            error: 'Email is required for registration' 
+          }));
+        }
         
         return this.http.get<User[]>(`${this.API_URL}/users`, {
           params: { email }
         }).pipe(
           exhaustMap(existingUsers => {
-            if (existingUsers.length > 0 && email) {
+            if (existingUsers.length > 0) {
               return of(AuthActions.registerExpertFailure({ 
                 error: ERROR_MESSAGES.AUTH.EMAIL_EXISTS 
               }));
@@ -2848,6 +2857,7 @@ export class AuthEffects {
               name: data.personalInfo?.fullName,
               phone: data.personalInfo?.mobileNumber,
               email: email,
+              password: password,
               role: 'EXPERT',
               skills: data.serviceProfile?.services || [],
               experience: parseInt(data.serviceProfile?.experienceYears || '0'),
@@ -3320,10 +3330,24 @@ export interface CreateBookingData {
 
 // Action Types
 export const BookingActionTypes = {
-  // Load Bookings
+  // Load Bookings (Customer)
   LOAD_BOOKINGS: '[Booking] Load Bookings',
   LOAD_BOOKINGS_SUCCESS: '[Booking] Load Bookings Success',
   LOAD_BOOKINGS_FAILURE: '[Booking] Load Bookings Failure',
+
+  // Load Expert Bookings
+  LOAD_EXPERT_BOOKINGS: '[Booking] Load Expert Bookings',
+  LOAD_EXPERT_BOOKINGS_SUCCESS: '[Booking] Load Expert Bookings Success',
+  LOAD_EXPERT_BOOKINGS_FAILURE: '[Booking] Load Expert Bookings Failure',
+
+  // Accept/Reject Booking
+  ACCEPT_BOOKING: '[Booking] Accept Booking',
+  ACCEPT_BOOKING_SUCCESS: '[Booking] Accept Booking Success',
+  ACCEPT_BOOKING_FAILURE: '[Booking] Accept Booking Failure',
+
+  REJECT_BOOKING: '[Booking] Reject Booking',
+  REJECT_BOOKING_SUCCESS: '[Booking] Reject Booking Success',
+  REJECT_BOOKING_FAILURE: '[Booking] Reject Booking Failure',
 
   // Load Single Booking
   LOAD_BOOKING: '[Booking] Load Booking',
@@ -3451,6 +3475,54 @@ export const updateBookingStatusFailure = createAction(
   props<{ error: string }>()
 );
 
+// Load Expert Bookings
+export const loadExpertBookings = createAction(
+  BookingActionTypes.LOAD_EXPERT_BOOKINGS,
+  props<{ expertId: string }>()
+);
+
+export const loadExpertBookingsSuccess = createAction(
+  BookingActionTypes.LOAD_EXPERT_BOOKINGS_SUCCESS,
+  props<{ bookings: Booking[] }>()
+);
+
+export const loadExpertBookingsFailure = createAction(
+  BookingActionTypes.LOAD_EXPERT_BOOKINGS_FAILURE,
+  props<{ error: string }>()
+);
+
+// Accept Booking
+export const acceptBooking = createAction(
+  BookingActionTypes.ACCEPT_BOOKING,
+  props<{ bookingId: string }>()
+);
+
+export const acceptBookingSuccess = createAction(
+  BookingActionTypes.ACCEPT_BOOKING_SUCCESS,
+  props<{ booking: Booking }>()
+);
+
+export const acceptBookingFailure = createAction(
+  BookingActionTypes.ACCEPT_BOOKING_FAILURE,
+  props<{ error: string }>()
+);
+
+// Reject Booking
+export const rejectBooking = createAction(
+  BookingActionTypes.REJECT_BOOKING,
+  props<{ bookingId: string; reason?: string }>()
+);
+
+export const rejectBookingSuccess = createAction(
+  BookingActionTypes.REJECT_BOOKING_SUCCESS,
+  props<{ booking: Booking }>()
+);
+
+export const rejectBookingFailure = createAction(
+  BookingActionTypes.REJECT_BOOKING_FAILURE,
+  props<{ error: string }>()
+);
+
 // Clear
 export const clearSelectedBooking = createAction(BookingActionTypes.CLEAR_SELECTED_BOOKING);
 export const clearBookingError = createAction(BookingActionTypes.CLEAR_BOOKING_ERROR);
@@ -3475,6 +3547,15 @@ export const BookingActions = {
   updateBookingStatus,
   updateBookingStatusSuccess,
   updateBookingStatusFailure,
+  loadExpertBookings,
+  loadExpertBookingsSuccess,
+  loadExpertBookingsFailure,
+  acceptBooking,
+  acceptBookingSuccess,
+  acceptBookingFailure,
+  rejectBooking,
+  rejectBookingSuccess,
+  rejectBookingFailure,
   clearSelectedBooking,
   clearBookingError
 };
@@ -3654,12 +3735,89 @@ export class BookingEffects {
     )
   );
 
+  // Load Expert Bookings Effect
+  loadExpertBookings$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(BookingActions.loadExpertBookings),
+      exhaustMap(({ expertId }) =>
+        this.http.get<Booking[]>(`${this.API_URL}/bookings`, {
+          params: { expertId }
+        }).pipe(
+          map(bookings => BookingActions.loadExpertBookingsSuccess({ bookings })),
+          catchError(error => of(BookingActions.loadExpertBookingsFailure({ 
+            error: error.message || ERROR_MESSAGES.BOOKING.LOAD_FAILED 
+          })))
+        )
+      )
+    )
+  );
+
+  // Accept Booking Effect
+  acceptBooking$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(BookingActions.acceptBooking),
+      exhaustMap(({ bookingId }) =>
+        this.http.patch<Booking>(`${this.API_URL}/bookings/${bookingId}`, {
+          status: BookingStatus.CONFIRMED,
+          updatedAt: new Date().toISOString()
+        }).pipe(
+          map(booking => BookingActions.acceptBookingSuccess({ booking })),
+          catchError(error => of(BookingActions.acceptBookingFailure({ 
+            error: error.message || ERROR_MESSAGES.BOOKING.UPDATE_FAILED 
+          })))
+        )
+      )
+    )
+  );
+
+  // Accept Booking Success
+  acceptBookingSuccess$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(BookingActions.acceptBookingSuccess),
+      tap(() => {
+        this.notificationService.success('Success', 'Booking accepted successfully!');
+      })
+    ),
+    { dispatch: false }
+  );
+
+  // Reject Booking Effect
+  rejectBooking$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(BookingActions.rejectBooking),
+      exhaustMap(({ bookingId, reason }) =>
+        this.http.patch<Booking>(`${this.API_URL}/bookings/${bookingId}`, {
+          status: BookingStatus.REJECTED,
+          cancellationReason: reason || 'Rejected by expert',
+          updatedAt: new Date().toISOString()
+        }).pipe(
+          map(booking => BookingActions.rejectBookingSuccess({ booking })),
+          catchError(error => of(BookingActions.rejectBookingFailure({ 
+            error: error.message || ERROR_MESSAGES.BOOKING.UPDATE_FAILED 
+          })))
+        )
+      )
+    )
+  );
+
+  // Reject Booking Success
+  rejectBookingSuccess$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(BookingActions.rejectBookingSuccess),
+      tap(() => {
+        this.notificationService.success('Success', 'Booking rejected.');
+      })
+    ),
+    { dispatch: false }
+  );
+
   // Error Effects
   loadFailure$ = createEffect(() =>
     this.actions$.pipe(
       ofType(
         BookingActions.loadBookingsFailure,
-        BookingActions.loadBookingFailure
+        BookingActions.loadBookingFailure,
+        BookingActions.loadExpertBookingsFailure
       ),
       tap(({ error }) => {
         this.notificationService.error('Loading Error', error);
@@ -3674,7 +3832,9 @@ export class BookingEffects {
         BookingActions.createBookingFailure,
         BookingActions.updateBookingFailure,
         BookingActions.cancelBookingFailure,
-        BookingActions.updateBookingStatusFailure
+        BookingActions.updateBookingStatusFailure,
+        BookingActions.acceptBookingFailure,
+        BookingActions.rejectBookingFailure
       ),
       tap(({ error }) => {
         this.notificationService.error('Operation Failed', error);
@@ -3703,6 +3863,9 @@ export interface BookingState extends EntityState<Booking> {
   error: string | null;
   createSuccess: boolean;
   updateSuccess: boolean;
+  // Separate expert bookings state
+  expertBookings: Booking[];
+  expertBookingsLoading: boolean;
 }
 
 export const bookingAdapter: EntityAdapter<Booking> = createEntityAdapter<Booking>({
@@ -3715,7 +3878,9 @@ export const initialBookingState: BookingState = bookingAdapter.getInitialState(
   isLoading: false,
   error: null,
   createSuccess: false,
-  updateSuccess: false
+  updateSuccess: false,
+  expertBookings: [],
+  expertBookingsLoading: false
 });
 
 export const bookingReducer = createReducer(
@@ -3864,6 +4029,66 @@ export const bookingReducer = createReducer(
     error
   })),
 
+  // Load Expert Bookings — stored separately from customer bookings
+  on(BookingActions.loadExpertBookings, (state) => ({
+    ...state,
+    expertBookingsLoading: true,
+    error: null
+  })),
+
+  on(BookingActions.loadExpertBookingsSuccess, (state, { bookings }) => ({
+    ...state,
+    expertBookings: bookings,
+    expertBookingsLoading: false,
+    error: null
+  })),
+
+  on(BookingActions.loadExpertBookingsFailure, (state, { error }) => ({
+    ...state,
+    expertBookingsLoading: false,
+    error
+  })),
+
+  // Accept Booking — update in expertBookings array
+  on(BookingActions.acceptBooking, (state) => ({
+    ...state,
+    expertBookingsLoading: true,
+    error: null
+  })),
+
+  on(BookingActions.acceptBookingSuccess, (state, { booking }) => ({
+    ...state,
+    expertBookings: state.expertBookings.map(b => b.id === booking.id ? booking : b),
+    expertBookingsLoading: false,
+    error: null
+  })),
+
+  on(BookingActions.acceptBookingFailure, (state, { error }) => ({
+    ...state,
+    expertBookingsLoading: false,
+    error
+  })),
+
+  // Reject Booking — update in expertBookings array
+  on(BookingActions.rejectBooking, (state) => ({
+    ...state,
+    expertBookingsLoading: true,
+    error: null
+  })),
+
+  on(BookingActions.rejectBookingSuccess, (state, { booking }) => ({
+    ...state,
+    expertBookings: state.expertBookings.map(b => b.id === booking.id ? booking : b),
+    expertBookingsLoading: false,
+    error: null
+  })),
+
+  on(BookingActions.rejectBookingFailure, (state, { error }) => ({
+    ...state,
+    expertBookingsLoading: false,
+    error
+  })),
+
   // Clear
   on(BookingActions.clearSelectedBooking, (state) => ({
     ...state,
@@ -3990,6 +4215,61 @@ export const selectBookingCounts = createSelector(
 export const selectBookingById = (bookingId: string) => createSelector(
   selectBookingEntities,
   (entities) => entities[bookingId]
+);
+
+// ========== Expert-specific selectors (separate state) ==========
+
+// All expert bookings from the dedicated expertBookings array
+export const selectExpertBookings = createSelector(
+  selectBookingState,
+  (state) => state.expertBookings
+);
+
+export const selectExpertBookingsLoading = createSelector(
+  selectBookingState,
+  (state) => state.expertBookingsLoading
+);
+
+export const selectPendingBookings = createSelector(
+  selectExpertBookings,
+  (bookings) => bookings.filter(b => b.status === BookingStatus.PENDING)
+);
+
+export const selectConfirmedBookings = createSelector(
+  selectExpertBookings,
+  (bookings) => bookings.filter(b => b.status === BookingStatus.CONFIRMED)
+);
+
+export const selectExpertBookingCounts = createSelector(
+  selectExpertBookings,
+  (bookings) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const weekAgo = new Date(today);
+    weekAgo.setDate(weekAgo.getDate() - 7);
+
+    return {
+      todaysJobs: bookings.filter(b => {
+        const bDate = new Date(b.date || b.createdAt);
+        bDate.setHours(0, 0, 0, 0);
+        return bDate.getTime() === today.getTime() && 
+               (b.status === BookingStatus.CONFIRMED || b.status === BookingStatus.IN_PROGRESS);
+      }).length,
+      thisWeek: bookings.filter(b => {
+        const bDate = new Date(b.date || b.createdAt);
+        return bDate >= weekAgo && 
+               (b.status === BookingStatus.CONFIRMED || b.status === BookingStatus.COMPLETED);
+      }).length,
+      totalEarnings: bookings
+        .filter(b => b.status === BookingStatus.COMPLETED || b.status === BookingStatus.CONFIRMED)
+        .reduce((sum, b) => sum + (b.totalAmount || 0), 0),
+      pending: bookings.filter(b => b.status === BookingStatus.PENDING).length,
+      confirmed: bookings.filter(b => b.status === BookingStatus.CONFIRMED).length,
+      completed: bookings.filter(b => b.status === BookingStatus.COMPLETED).length,
+      rejected: bookings.filter(b => b.status === BookingStatus.REJECTED).length,
+      cancelled: bookings.filter(b => b.status === BookingStatus.CANCELLED).length
+    };
+  }
 );
 ```
 
@@ -6054,6 +6334,41 @@ export class RegisterCustomerComponent implements OnInit, OnDestroy {
                 />
               </div>
 
+              <!-- Email & Password -->
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M4 4H20C21.1 4 22 4.9 22 6V18C22 19.1 21.1 20 20 20H4C2.9 20 2 19.1 2 18V6C2 4.9 2.9 4 4 4Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      <path d="M22 6L12 13L2 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    Email Address <span class="required">*</span>
+                  </label>
+                  <input 
+                    type="email" 
+                    formControlName="email"
+                    class="form-input"
+                    placeholder="yourname@example.com"
+                  />
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <rect x="3" y="11" width="18" height="11" rx="2" stroke="currentColor" stroke-width="2"/>
+                      <path d="M7 11V7C7 4.23858 9.23858 2 12 2C14.7614 2 17 4.23858 17 7V11" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                    Password <span class="required">*</span>
+                  </label>
+                  <input 
+                    type="password" 
+                    formControlName="password"
+                    class="form-input"
+                    placeholder="Min 6 characters"
+                  />
+                </div>
+              </div>
+
               <!-- Mobile Number & Date of Birth -->
               <div class="form-row">
                 <div class="form-group">
@@ -7585,12 +7900,12 @@ export class RegisterCustomerComponent implements OnInit, OnDestroy {
 ```ts
 import { Component, ViewChild, ElementRef, OnInit, OnDestroy, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink, Router } from '@angular/router';
+import { RouterLink } from '@angular/router';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { Subject, takeUntil, filter } from 'rxjs';
 import { AuthActions } from '../../../core/store/auth/auth.actions';
-import { selectAuthLoading, selectAuthError, selectRegistrationSuccess } from '../../../core/store/auth/auth.selectors';
+import { selectAuthLoading, selectAuthError } from '../../../core/store/auth/auth.selectors';
 import { NotificationService } from '../../../core/services/notification.service';
 
 interface ServiceOption {
@@ -7621,7 +7936,6 @@ interface IdTypeOption {
 export class RegisterExpertComponent implements OnInit, OnDestroy {
   private readonly store = inject(Store);
   private readonly fb = inject(FormBuilder);
-  private readonly router = inject(Router);
   private readonly notification = inject(NotificationService);
   private readonly destroy$ = new Subject<void>();
 
@@ -7711,6 +8025,8 @@ export class RegisterExpertComponent implements OnInit, OnDestroy {
     // Initialize forms
     this.personalInfoForm = this.fb.group({
       fullName: ['', [Validators.required, Validators.minLength(2)]],
+      email: ['', [Validators.required, Validators.email]],
+      password: ['', [Validators.required, Validators.minLength(6)]],
       mobileNumber: ['', [Validators.required, Validators.pattern(/^[0-9]{10}$/)]],
       dateOfBirth: ['', Validators.required],
       address: ['', Validators.required],
@@ -7746,15 +8062,6 @@ export class RegisterExpertComponent implements OnInit, OnDestroy {
       filter(error => error !== null)
     ).subscribe(error => {
       this.errorMessage.set(error || '');
-    });
-
-    // Handle successful registration
-    this.store.select(selectRegistrationSuccess).pipe(
-      takeUntil(this.destroy$),
-      filter(success => success === true)
-    ).subscribe(() => {
-      this.notification.success('Registration Successful', 'Your expert account has been created. Please log in.');
-      this.router.navigate(['/login'], { queryParams: { role: 'expert' } });
     });
   }
 
@@ -7914,7 +8221,6 @@ export class RegisterExpertComponent implements OnInit, OnDestroy {
   canSubmit(): boolean {
     return this.selectedIdType !== '' && 
            this.idVerificationForm.get('idNumber')?.valid === true && 
-           this.uploadedFileName !== '' && 
            this.termsAccepted;
   }
 }
@@ -14070,6 +14376,1979 @@ export class MyBookingsComponent implements OnInit, OnDestroy {
     if (index !== -1) {
       bookings[index].userRating = rating;
       this.allBookings.set([...bookings]);
+    }
+  }
+}
+```
+
+---
+
+## features/expert/dashboard/expert-dashboard.component.html
+
+- Absolute path: `/Users/suhas/Desktop/angular/housemate/src/app/features/expert/dashboard/expert-dashboard.component.html`
+
+```html
+<!-- Expert Dashboard -->
+<div class="dashboard-page">
+  <!-- Shared Navbar -->
+  <app-navbar [pageType]="'expert'" />
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <div class="dashboard-grid">
+      <!-- ===== LEFT COLUMN ===== -->
+      <div class="left-column">
+
+        <!-- Welcome Banner -->
+        <section class="welcome-banner">
+          <div class="welcome-banner__content">
+            <div class="welcome-banner__status">
+              <button class="online-toggle" [class.online]="isOnline()" (click)="toggleOnlineStatus()">
+                <span class="online-toggle__dot"></span>
+                <span class="online-toggle__label">{{ isOnline() ? 'Online' : 'Offline' }}</span>
+              </button>
+              <span class="ready-badge">Ready to accept jobs</span>
+            </div>
+            <p class="welcome-banner__greeting">Welcome back,</p>
+            <h1 class="welcome-banner__name">{{ userName().toUpperCase() }}!</h1>
+            <div class="welcome-banner__skills">
+              <span class="skills-label">Expert at</span>
+              <div class="skills-icons">
+                @for (skill of userSkills(); track skill) {
+                  <div class="skill-icon" [title]="skill">
+                    <img [src]="getSkillIcon(skill)" [alt]="skill" />
+                  </div>
+                }
+              </div>
+            </div>
+          </div>
+          <div class="welcome-banner__image">
+            <img src="assets/images/expert-hero.png" alt="Expert" />
+          </div>
+        </section>
+
+        <!-- My Reports -->
+        <section class="reports-section">
+          <h2 class="section-title">My Reports</h2>
+          <div class="reports-grid">
+            <div class="report-card">
+              <div class="report-card__icon report-card__icon--jobs">
+                <img src="assets/images/icons/todays-job.png" alt="Today's Job" />
+              </div>
+              <span class="report-card__label">Today's Job</span>
+              <span class="report-card__value">{{ bookingCounts().todaysJobs < 10 ? '0' + bookingCounts().todaysJobs : bookingCounts().todaysJobs }}</span>
+            </div>
+            <div class="report-card">
+              <div class="report-card__icon report-card__icon--week">
+                <img src="assets/images/icons/this-week.png" alt="This Week" />
+              </div>
+              <span class="report-card__label">This Week</span>
+              <span class="report-card__value">{{ bookingCounts().thisWeek < 10 ? '0' + bookingCounts().thisWeek : bookingCounts().thisWeek }}</span>
+            </div>
+            <div class="report-card">
+              <div class="report-card__icon report-card__icon--earnings">
+                <img src="assets/images/icons/total-earning.png" alt="Total Earning" />
+              </div>
+              <span class="report-card__label">Total Earning</span>
+              <span class="report-card__value">{{ formatEarnings(bookingCounts().totalEarnings) }}</span>
+            </div>
+            <div class="report-card">
+              <div class="report-card__icon report-card__icon--rating">
+                <img src="assets/images/icons/my-rating.png" alt="My Rating" />
+              </div>
+              <span class="report-card__label">My Rating</span>
+              <span class="report-card__value">{{ userRating() }}</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- My Appointments -->
+        <section class="appointments-section">
+          <div class="appointments-header">
+            <h2 class="section-title">My Appointments</h2>
+            <div class="appointments-controls">
+              <div class="search-box">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                  <circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2"/>
+                  <path d="M21 21L16.65 16.65" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+                <input type="text" placeholder="Search..." (input)="onSearchChange($event)" />
+              </div>
+              <div class="filter-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                  <path d="M22 3H2L10 12.46V19L14 21V12.46L22 3Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </div>
+              <select class="filter-select" (change)="setFilter($any($event.target).value)">
+                <option value="All">All</option>
+                <option value="PENDING">Pending</option>
+                <option value="CONFIRMED">Accepted</option>
+                <option value="REJECTED">Rejected</option>
+                <option value="CANCELLED">Cancelled</option>
+                <option value="COMPLETED">Completed</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="appointments-grid">
+            @if (isLoadingBookings()) {
+              <div class="loading-placeholder">Loading appointments...</div>
+            } @else if (filteredAppointments().length === 0) {
+              <div class="no-appointments">
+                <p>No appointments found.</p>
+              </div>
+            } @else {
+              @for (booking of filteredAppointments(); track booking.id) {
+                <div class="appointment-card" [class]="getStatusClass(booking.status)">
+                  <div class="appointment-card__header">
+                    <div class="appointment-card__icon">
+                      <img [src]="getServiceIcon(booking.serviceName)" [alt]="booking.serviceName" />
+                    </div>
+                    <div class="appointment-card__earning">
+                      <span class="earning-amount">₹{{ booking.totalAmount | number:'1.0-0' }}/-</span>
+                      <span class="earning-label">Earning</span>
+                    </div>
+                  </div>
+                  <div class="appointment-card__body">
+                    <div class="appointment-card__date">{{ formatBookingDate(booking.date) }}</div>
+                    <div class="appointment-card__time">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                        <path d="M12 6V12L16 14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                      </svg>
+                      {{ formatTimeSlot(booking.timeSlot) }}, booked for {{ booking.duration }}hrs
+                    </div>
+                    <div class="appointment-card__address">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                        <path d="M21 10C21 17 12 23 12 23C12 23 3 17 3 10C3 5 7 1 12 1C17 1 21 5 21 10Z" stroke="currentColor" stroke-width="2"/>
+                        <circle cx="12" cy="10" r="3" stroke="currentColor" stroke-width="2"/>
+                      </svg>
+                      201, Manjari Khurd, Pune - 143505
+                    </div>
+                    <div class="appointment-card__status" [class]="getStatusClass(booking.status)">
+                      @if (booking.status === 'CONFIRMED') {
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                          <circle cx="12" cy="12" r="10" stroke="#16a34a" stroke-width="2"/>
+                          <path d="M8 12L11 15L16 9" stroke="#16a34a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                      } @else if (booking.status === 'REJECTED' || booking.status === 'CANCELLED') {
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                          <circle cx="12" cy="12" r="10" stroke="#dc2626" stroke-width="2"/>
+                          <path d="M15 9L9 15M9 9L15 15" stroke="#dc2626" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                      }
+                      <span>{{ getStatusLabel(booking.status) }}</span>
+                    </div>
+                  </div>
+                  <div class="appointment-card__footer">
+                    <a class="view-details-link" (click)="viewDetails(booking)">View Details</a>
+                  </div>
+                </div>
+              }
+            }
+          </div>
+        </section>
+      </div>
+
+      <!-- ===== RIGHT COLUMN ===== -->
+      <div class="right-column">
+
+        <!-- Pending Requests -->
+        <section class="pending-section">
+          <h2 class="section-title section-title--red">Pending Requests</h2>
+          @if (pendingBookings().length === 0) {
+            <div class="no-pending">
+              <p>No pending requests right now.</p>
+            </div>
+          } @else {
+            @for (booking of pendingBookings(); track booking.id) {
+              <div class="pending-card">
+                <div class="pending-card__date">{{ formatBookingDate(booking.date) }}</div>
+                <div class="pending-card__time">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                    <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                    <path d="M12 6V12L16 14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  </svg>
+                  {{ formatTimeSlot(booking.timeSlot) }}, booked for {{ booking.duration }}hrs
+                </div>
+                <div class="pending-card__address">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                    <path d="M21 10C21 17 12 23 12 23C12 23 3 17 3 10C3 5 7 1 12 1C17 1 21 5 21 10Z" stroke="currentColor" stroke-width="2"/>
+                    <circle cx="12" cy="10" r="3" stroke="currentColor" stroke-width="2"/>
+                  </svg>
+                  201, Manjari Khurd, Pune - 143505
+                </div>
+                <button class="take-action-btn" (click)="openTakeAction(booking)">Take Action</button>
+              </div>
+            }
+          }
+        </section>
+
+        <!-- My Calendar -->
+        <section class="calendar-section">
+          <h2 class="section-title section-title--navy">My Calendar</h2>
+          <div class="calendar-widget">
+            <div class="calendar-widget__today">
+              <span class="calendar-widget__day-name">{{ todayDayName() }}</span>
+              <span class="calendar-widget__day-number">{{ todayDate() }}</span>
+            </div>
+            <div class="calendar-widget__month">
+              <div class="calendar-widget__month-header">
+                <button class="cal-nav" (click)="prevMonth()">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                    <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  </svg>
+                </button>
+                <span class="month-label">{{ currentMonthName() }} {{ currentYear() }}</span>
+                <button class="cal-nav" (click)="nextMonth()">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                    <path d="M9 18L15 12L9 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  </svg>
+                </button>
+              </div>
+              <div class="calendar-widget__grid">
+                <div class="cal-header">S</div>
+                <div class="cal-header">M</div>
+                <div class="cal-header">T</div>
+                <div class="cal-header">W</div>
+                <div class="cal-header">T</div>
+                <div class="cal-header">F</div>
+                <div class="cal-header">S</div>
+                @for (day of calendarDays(); track $index) {
+                  <div class="cal-day" 
+                    [class.other-month]="!day.isCurrentMonth"
+                    [class.today]="day.isToday"
+                    [class.has-booking]="day.hasBooking">
+                    {{ day.day }}
+                  </div>
+                }
+              </div>
+            </div>
+          </div>
+
+          <!-- Today's Schedule -->
+          <div class="today-schedule">
+            <h3 class="today-label">Today</h3>
+            @if (todayBookings().length === 0) {
+              <p class="no-today">No bookings today.</p>
+            } @else {
+              @for (booking of todayBookings(); track booking.id) {
+                <div class="today-item">
+                  <div class="today-item__icon">
+                    <img [src]="getServiceIcon(booking.serviceName)" [alt]="booking.serviceName" />
+                  </div>
+                  <div class="today-item__info">
+                    <span class="today-item__name">{{ booking.serviceName }}</span>
+                    <div class="today-item__time">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                        <path d="M12 6V12L16 14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                      </svg>
+                      {{ formatTimeSlot(booking.timeSlot) }}, booked for {{ booking.duration }}hrs
+                    </div>
+                    <div class="today-item__address">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                        <path d="M21 10C21 17 12 23 12 23C12 23 3 17 3 10C3 5 7 1 12 1C17 1 21 5 21 10Z" stroke="currentColor" stroke-width="2"/>
+                      </svg>
+                      201, Manjari Khurd, Pune - 143505
+                    </div>
+                  </div>
+                </div>
+              }
+            }
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Take Action Modal -->
+@if (showTakeActionModal() && selectedBooking()) {
+  <app-take-action-modal
+    [booking]="selectedBooking()!"
+    [customer]="selectedBookingCustomer()"
+    [address]="selectedBookingAddress()"
+    (close)="closeTakeActionModal()"
+    (accept)="onAcceptBooking($event)"
+    (reject)="onRejectBooking($event)"
+  />
+}
+```
+
+---
+
+## features/expert/dashboard/expert-dashboard.component.scss
+
+- Absolute path: `/Users/suhas/Desktop/angular/housemate/src/app/features/expert/dashboard/expert-dashboard.component.scss`
+
+```scss
+// Expert Dashboard Styles - Matching Figma Design
+
+// Variables
+$navy: #0D436B;
+$teal: #0D9488;
+$red-accent: #DC2626;
+$green: #16A34A;
+$gray-100: #F7F8FA;
+$gray-200: #E5E7EB;
+$gray-300: #D1D5DB;
+$gray-500: #6B7280;
+$gray-700: #374151;
+$gray-900: #111827;
+
+.dashboard-page {
+  min-height: 100vh;
+  background: linear-gradient(180deg, #E8F5F4 0%, #F0F9F8 30%, #F5FBFA 60%, #FFFFFF 100%);
+}
+
+.main-content {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem 40px;
+  padding-top: calc(96px + 1.5rem);
+
+  @media (max-width: 768px) {
+    padding: 1rem 16px;
+    padding-top: calc(88px + 1rem);
+  }
+}
+
+// ===== DASHBOARD GRID =====
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 1fr 350px;
+  gap: 2rem;
+
+  @media (max-width: 1024px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+// ===== WELCOME BANNER =====
+.welcome-banner {
+  background: linear-gradient(135deg, #E0F7FA 0%, #F0FDFA 50%, #FFFFFF 100%);
+  border-radius: 16px;
+  padding: 2rem 2.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 2rem;
+  box-shadow: 0 2px 12px rgba(13, 67, 107, 0.06);
+
+  &__content {
+    flex: 1;
+    z-index: 1;
+  }
+
+  &__status {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.5rem;
+  }
+
+  &__greeting {
+    font-size: 0.95rem;
+    color: $gray-500;
+    margin: 0;
+  }
+
+  &__name {
+    font-size: 2rem;
+    font-weight: 800;
+    color: $red-accent;
+    margin: 0.25rem 0 1rem;
+    letter-spacing: 0.5px;
+  }
+
+  &__skills {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  &__image {
+    width: 200px;
+    height: 200px;
+    flex-shrink: 0;
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+  }
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    text-align: center;
+    padding: 1.5rem;
+
+    &__image {
+      width: 150px;
+      height: 150px;
+    }
+
+    &__skills {
+      justify-content: center;
+    }
+  }
+}
+
+.online-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: $green;
+  color: white;
+  border: none;
+  border-radius: 20px;
+  padding: 0.35rem 0.85rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+
+  &:not(.online) {
+    background: $gray-500;
+  }
+
+  &__dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: white;
+  }
+}
+
+.ready-badge {
+  font-size: 0.75rem;
+  color: $gray-500;
+  background: rgba(255,255,255,0.8);
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+}
+
+.skills-label {
+  font-size: 0.85rem;
+  color: $gray-500;
+}
+
+.skills-icons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.skill-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  overflow: hidden;
+
+  img {
+    width: 28px;
+    height: 28px;
+    object-fit: contain;
+  }
+}
+
+// ===== SECTION TITLES =====
+.section-title {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: $teal;
+  margin-bottom: 1.25rem;
+
+  &--red {
+    color: $red-accent;
+  }
+
+  &--navy {
+    color: $navy;
+  }
+}
+
+// ===== MY REPORTS =====
+.reports-section {
+  margin-bottom: 2rem;
+}
+
+.reports-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+
+  @media (max-width: 768px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.report-card {
+  background: white;
+  border-radius: 14px;
+  padding: 1.25rem;
+  text-align: center;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  transition: transform 0.2s, box-shadow 0.2s;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+  }
+
+  &__icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    img {
+      width: 44px;
+      height: 44px;
+      object-fit: contain;
+    }
+  }
+
+  &__label {
+    font-size: 0.8rem;
+    color: $gray-500;
+    font-weight: 500;
+  }
+
+  &__value {
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: $navy;
+  }
+}
+
+// ===== MY APPOINTMENTS =====
+.appointments-section {
+  margin-bottom: 2rem;
+}
+
+.appointments-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.25rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.appointments-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.search-box {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: white;
+  border: 1px solid $gray-200;
+  border-radius: 8px;
+  padding: 0.5rem 0.75rem;
+
+  input {
+    border: none;
+    outline: none;
+    font-size: 0.85rem;
+    width: 120px;
+    color: $gray-700;
+
+    &::placeholder {
+      color: $gray-300;
+    }
+  }
+
+  svg {
+    color: $gray-500;
+  }
+}
+
+.filter-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: white;
+  border: 1px solid $gray-200;
+  border-radius: 8px;
+  cursor: pointer;
+  color: $gray-500;
+}
+
+.filter-select {
+  background: white;
+  border: 1px solid $gray-200;
+  border-radius: 8px;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.85rem;
+  color: $gray-700;
+  cursor: pointer;
+  outline: none;
+}
+
+.appointments-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.appointment-card {
+  background: white;
+  border-radius: 14px;
+  padding: 1.25rem;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  border: 2px solid transparent;
+  transition: border-color 0.2s, box-shadow 0.2s;
+
+  &:hover {
+    box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+  }
+
+  &.status-accepted {
+    border-color: rgba($green, 0.3);
+  }
+
+  &.status-rejected,
+  &.status-cancelled {
+    border-color: rgba($red-accent, 0.3);
+  }
+
+  &.status-pending {
+    border-color: rgba(#F59E0B, 0.3);
+  }
+
+  &__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 0.75rem;
+  }
+
+  &__icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: $gray-100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+
+    img {
+      width: 32px;
+      height: 32px;
+      object-fit: contain;
+    }
+  }
+
+  &__earning {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    background: linear-gradient(135deg, #FFF7ED 0%, #FEF3C7 100%);
+    border-radius: 10px;
+    padding: 0.4rem 0.75rem;
+  }
+
+  .earning-amount {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: $navy;
+  }
+
+  .earning-label {
+    font-size: 0.65rem;
+    color: $gray-500;
+  }
+
+  &__body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+
+  &__date {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: $gray-900;
+  }
+
+  &__time,
+  &__address {
+    font-size: 0.78rem;
+    color: $gray-500;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  &__status {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin-top: 0.35rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+
+    &.status-accepted {
+      color: $green;
+    }
+
+    &.status-rejected,
+    &.status-cancelled {
+      color: $red-accent;
+    }
+
+    &.status-pending {
+      color: #F59E0B;
+    }
+
+    &.status-completed {
+      color: $teal;
+    }
+
+    &.status-progress {
+      color: #3B82F6;
+    }
+  }
+
+  &__footer {
+    margin-top: 0.75rem;
+    text-align: right;
+  }
+
+  .view-details-link {
+    color: $navy;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: underline;
+    transition: color 0.2s;
+
+    &:hover {
+      color: $teal;
+    }
+  }
+}
+
+.no-appointments,
+.loading-placeholder {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 2rem;
+  color: $gray-500;
+  font-size: 0.9rem;
+}
+
+// ===== RIGHT COLUMN =====
+.right-column {
+  @media (max-width: 1024px) {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+  }
+
+  @media (max-width: 640px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+// ===== PENDING REQUESTS =====
+.pending-section {
+  margin-bottom: 2rem;
+}
+
+.pending-card {
+  background: white;
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+  border-left: 3px solid $red-accent;
+
+  &__date {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: $gray-900;
+    margin-bottom: 0.35rem;
+  }
+
+  &__time,
+  &__address {
+    font-size: 0.78rem;
+    color: $gray-500;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-bottom: 0.2rem;
+  }
+
+  .take-action-btn {
+    display: block;
+    margin-left: auto;
+    margin-top: 0.5rem;
+    background: none;
+    border: none;
+    color: $teal;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: underline;
+    transition: color 0.2s;
+
+    &:hover {
+      color: darken($teal, 10%);
+    }
+  }
+}
+
+.no-pending {
+  text-align: center;
+  padding: 1.5rem;
+  color: $gray-500;
+  font-size: 0.85rem;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
+
+// ===== CALENDAR =====
+.calendar-section {
+  margin-bottom: 2rem;
+}
+
+.calendar-widget {
+  background: white;
+  border-radius: 14px;
+  padding: 1.25rem;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  display: flex;
+  gap: 1.25rem;
+  margin-bottom: 1.25rem;
+
+  &__today {
+    background: $navy;
+    color: white;
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-width: 80px;
+  }
+
+  &__day-name {
+    font-size: 0.7rem;
+    font-weight: 500;
+    text-transform: capitalize;
+  }
+
+  &__day-number {
+    font-size: 2.5rem;
+    font-weight: 800;
+    line-height: 1;
+  }
+
+  &__month {
+    flex: 1;
+  }
+
+  &__month-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+  }
+
+  &__grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
+    text-align: center;
+  }
+}
+
+.cal-nav {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: $gray-500;
+  padding: 0.25rem;
+  border-radius: 4px;
+
+  &:hover {
+    background: $gray-100;
+  }
+}
+
+.month-label {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: $navy;
+}
+
+.cal-header {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: $gray-500;
+  padding: 0.25rem;
+}
+
+.cal-day {
+  font-size: 0.72rem;
+  padding: 0.3rem;
+  border-radius: 50%;
+  color: $gray-700;
+  cursor: default;
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &.other-month {
+    color: $gray-300;
+  }
+
+  &.today {
+    background: $navy;
+    color: white;
+    font-weight: 700;
+  }
+
+  &.has-booking {
+    background: rgba($teal, 0.15);
+    color: $teal;
+    font-weight: 600;
+  }
+
+  &.today.has-booking {
+    background: $teal;
+    color: white;
+  }
+}
+
+// ===== TODAY'S SCHEDULE =====
+.today-schedule {
+  background: white;
+  border-radius: 14px;
+  padding: 1.25rem;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+}
+
+.today-label {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: $gray-900;
+  margin-bottom: 0.75rem;
+}
+
+.no-today {
+  font-size: 0.82rem;
+  color: $gray-500;
+}
+
+.today-item {
+  display: flex;
+  gap: 0.75rem;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid $gray-100;
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  &__icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background: $gray-100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+
+    img {
+      width: 24px;
+      height: 24px;
+      object-fit: contain;
+    }
+  }
+
+  &__info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+
+  &__name {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: $gray-900;
+  }
+
+  &__time,
+  &__address {
+    font-size: 0.72rem;
+    color: $gray-500;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+  }
+}
+```
+
+---
+
+## features/expert/dashboard/expert-dashboard.component.ts
+
+- Absolute path: `/Users/suhas/Desktop/angular/housemate/src/app/features/expert/dashboard/expert-dashboard.component.ts`
+
+```ts
+import { Component, OnInit, OnDestroy, signal, computed, inject } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
+import { Store } from '@ngrx/store';
+import { Subject, takeUntil, filter, forkJoin } from 'rxjs';
+import { HttpClient } from '@angular/common/http';
+import { NavbarComponent } from '../../../shared/components/navbar/navbar.component';
+import { TakeActionModalComponent } from '../take-action-modal/take-action-modal.component';
+import { AuthActions } from '../../../core/store/auth/auth.actions';
+import { BookingActions, Booking, BookingStatus } from '../../../core/store/booking/booking.actions';
+import { selectUser } from '../../../core/store/auth/auth.selectors';
+import { 
+  selectExpertBookings, 
+  selectExpertBookingsLoading, 
+  selectPendingBookings,
+  selectExpertBookingCounts 
+} from '../../../core/store/booking/booking.selectors';
+
+interface CalendarDay {
+  day: number;
+  isCurrentMonth: boolean;
+  isToday: boolean;
+  hasBooking: boolean;
+}
+
+@Component({
+  selector: 'app-expert-dashboard',
+  standalone: true,
+  imports: [CommonModule, FormsModule, NavbarComponent, TakeActionModalComponent],
+  templateUrl: './expert-dashboard.component.html',
+  styleUrl: './expert-dashboard.component.scss'
+})
+export class ExpertDashboardComponent implements OnInit, OnDestroy {
+  private readonly store = inject(Store);
+  private readonly router = inject(Router);
+  private readonly http = inject(HttpClient);
+  private readonly destroy$ = new Subject<void>();
+  private readonly API_URL = 'http://localhost:3000';
+
+  // User info
+  currentUser = signal<any>(null);
+  userName = computed(() => this.currentUser()?.name || 'Expert');
+  userLocation = computed(() => {
+    const user = this.currentUser();
+    return user?.location ? `${user.location.area}, ${user.location.city}` : '';
+  });
+  userSkills = computed(() => this.currentUser()?.skills || []);
+  userRating = computed(() => this.currentUser()?.rating || 0);
+  isOnline = signal(true);
+
+  // Bookings
+  allBookings = signal<Booking[]>([]);
+  pendingBookings = signal<Booking[]>([]);
+  isLoadingBookings = signal(true);
+  bookingCounts = signal<any>({
+    todaysJobs: 0, thisWeek: 0, totalEarnings: 0, pending: 0,
+    confirmed: 0, completed: 0, rejected: 0, cancelled: 0
+  });
+
+  // Appointments filter
+  appointmentFilter = signal<string>('All');
+  searchQuery = signal('');
+  filteredAppointments = computed(() => {
+    let bookings = this.allBookings();
+    const filterVal = this.appointmentFilter();
+    const query = this.searchQuery().toLowerCase();
+
+    if (filterVal !== 'All') {
+      bookings = bookings.filter(b => b.status === filterVal);
+    }
+    if (query) {
+      bookings = bookings.filter(b =>
+        (b.serviceName || '').toLowerCase().includes(query) ||
+        (b.status || '').toLowerCase().includes(query)
+      );
+    }
+    return bookings;
+  });
+
+  // Calendar
+  currentMonth = signal(new Date());
+  calendarDays = computed(() => this.generateCalendarDays());
+  currentMonthName = computed(() => {
+    return this.currentMonth().toLocaleDateString('en-US', { month: 'long' }).toUpperCase();
+  });
+  currentYear = computed(() => this.currentMonth().getFullYear());
+  todayDate = computed(() => {
+    const today = new Date();
+    return today.getDate();
+  });
+  todayDayName = computed(() => {
+    return new Date().toLocaleDateString('en-US', { weekday: 'long' });
+  });
+  todayBookings = computed(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return this.allBookings().filter(b => {
+      const bDate = new Date(b.date);
+      bDate.setHours(0, 0, 0, 0);
+      return bDate.getTime() === today.getTime();
+    });
+  });
+
+  // Take Action Modal
+  showTakeActionModal = signal(false);
+  selectedBooking = signal<Booking | null>(null);
+  selectedBookingCustomer = signal<any>(null);
+  selectedBookingAddress = signal<any>(null);
+
+  // Service icons map
+  serviceIcons: Record<string, string> = {
+    'Cleaning': 'assets/images/services/cleaning-icon.png',
+    'Cooking': 'assets/images/services/cooking-icon.png',
+    'Gardening': 'assets/images/services/gardening-icon.png',
+    'Plumbing': 'assets/images/services/plumbing-icon.png',
+    'Electrician': 'assets/images/services/electrician-icon.png',
+    'Baby Sitting': 'assets/images/services/babysitting-icon.png',
+    'Carpentry': 'assets/images/services/carpentry-icon.png',
+    'Painting': 'assets/images/services/painting-icon.png'
+  };
+
+  // Skill icons map
+  skillIcons: Record<string, string> = {
+    'Cleaning': 'assets/images/services/cleaning-icon.png',
+    'Cooking': 'assets/images/services/cooking-icon.png',
+    'Gardening': 'assets/images/services/gardening-icon.png',
+    'Plumbing': 'assets/images/services/plumbing-icon.png',
+    'Electrician': 'assets/images/services/electrician-icon.png',
+    'Baby Sitting': 'assets/images/services/babysitting-icon.png',
+    'Carpentry': 'assets/images/services/carpentry-icon.png',
+    'Painting': 'assets/images/services/painting-icon.png'
+  };
+
+  ngOnInit(): void {
+    // Subscribe to user from store
+    this.store.select(selectUser).pipe(
+      takeUntil(this.destroy$),
+      filter(user => user !== null)
+    ).subscribe(user => {
+      if (user) {
+        this.currentUser.set(user);
+        this.isOnline.set((user as any).isOnline ?? true);
+        // Load expert's bookings
+        this.store.dispatch(BookingActions.loadExpertBookings({ expertId: user.id }));
+      }
+    });
+
+    // Subscribe to expert bookings (separate from customer bookings)
+    this.store.select(selectExpertBookings).pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(bookings => {
+      this.allBookings.set(bookings);
+    });
+
+    // Subscribe to pending bookings
+    this.store.select(selectPendingBookings).pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(bookings => {
+      this.pendingBookings.set(bookings);
+    });
+
+    // Subscribe to booking counts
+    this.store.select(selectExpertBookingCounts).pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(counts => {
+      this.bookingCounts.set(counts);
+    });
+
+    // Subscribe to expert loading state
+    this.store.select(selectExpertBookingsLoading).pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(loading => {
+      this.isLoadingBookings.set(loading);
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  // Toggle online status
+  toggleOnlineStatus(): void {
+    const newStatus = !this.isOnline();
+    this.isOnline.set(newStatus);
+    const user = this.currentUser();
+    if (user) {
+      this.http.patch(`${this.API_URL}/users/${user.id}`, { isOnline: newStatus })
+        .subscribe();
+    }
+  }
+
+  // Format booking date
+  formatBookingDate(dateStr: string): string {
+    const date = new Date(dateStr);
+    const day = date.getDate();
+    const month = date.toLocaleDateString('en-US', { month: 'short' });
+    const weekday = date.toLocaleDateString('en-US', { weekday: 'long' });
+    return `${day} ${month}, ${weekday}`;
+  }
+
+  // Format time slot
+  formatTimeSlot(timeSlot: string): string {
+    if (!timeSlot) return '';
+    const [start] = timeSlot.split('-');
+    const [hours, minutes] = start.split(':');
+    const hour = parseInt(hours);
+    const ampm = hour >= 12 ? 'PM' : 'AM';
+    const hour12 = hour % 12 || 12;
+    return `${hour12}:${minutes} ${ampm}`;
+  }
+
+  // Get service icon
+  getServiceIcon(serviceName: string): string {
+    return this.serviceIcons[serviceName] || 'assets/images/services/cleaning-icon.png';
+  }
+
+  // Get skill icon
+  getSkillIcon(skill: string): string {
+    return this.skillIcons[skill] || 'assets/images/services/cleaning-icon.png';
+  }
+
+  // Get status label
+  getStatusLabel(status: string): string {
+    switch (status) {
+      case 'PENDING': return 'Pending';
+      case 'CONFIRMED': return 'Booking Accepted';
+      case 'IN_PROGRESS': return 'In Progress';
+      case 'COMPLETED': return 'Completed';
+      case 'CANCELLED': return 'Cancelled by Customer';
+      case 'REJECTED': return 'Booking Rejected';
+      default: return status;
+    }
+  }
+
+  // Get status CSS class
+  getStatusClass(status: string): string {
+    switch (status) {
+      case 'PENDING': return 'status-pending';
+      case 'CONFIRMED': return 'status-accepted';
+      case 'IN_PROGRESS': return 'status-progress';
+      case 'COMPLETED': return 'status-completed';
+      case 'CANCELLED': return 'status-cancelled';
+      case 'REJECTED': return 'status-rejected';
+      default: return '';
+    }
+  }
+
+  // Format earnings
+  formatEarnings(amount: number): string {
+    if (amount >= 1000) {
+      return `₹${(amount / 1000).toFixed(1)}K`;
+    }
+    return `₹${amount}`;
+  }
+
+  // Set filter
+  setFilter(filter: string): void {
+    this.appointmentFilter.set(filter);
+  }
+
+  // Search
+  onSearchChange(event: Event): void {
+    const target = event.target as HTMLInputElement;
+    this.searchQuery.set(target.value);
+  }
+
+  // Open Take Action Modal
+  openTakeAction(booking: Booking): void {
+    this.selectedBooking.set(booking);
+    
+    // Fetch customer and address details
+    if (booking.customerId) {
+      this.http.get(`${this.API_URL}/users/${booking.customerId}`)
+        .subscribe((customer: any) => {
+          this.selectedBookingCustomer.set(customer);
+        });
+    }
+    if (booking.addressId) {
+      this.http.get(`${this.API_URL}/addresses/${booking.addressId}`)
+        .subscribe((address: any) => {
+          this.selectedBookingAddress.set(address);
+        });
+    }
+
+    this.showTakeActionModal.set(true);
+  }
+
+  // Close modal
+  closeTakeActionModal(): void {
+    this.showTakeActionModal.set(false);
+    this.selectedBooking.set(null);
+    this.selectedBookingCustomer.set(null);
+    this.selectedBookingAddress.set(null);
+  }
+
+  // Accept booking
+  onAcceptBooking(bookingId: string): void {
+    this.store.dispatch(BookingActions.acceptBooking({ bookingId }));
+    this.closeTakeActionModal();
+  }
+
+  // Reject booking
+  onRejectBooking(bookingId: string): void {
+    this.store.dispatch(BookingActions.rejectBooking({ bookingId }));
+    this.closeTakeActionModal();
+  }
+
+  // View booking details
+  viewDetails(booking: Booking): void {
+    this.openTakeAction(booking);
+  }
+
+  // Calendar methods
+  generateCalendarDays(): CalendarDay[] {
+    const current = this.currentMonth();
+    const year = current.getFullYear();
+    const month = current.getMonth();
+    const firstDay = new Date(year, month, 1).getDay(); // 0=Sun
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const today = new Date();
+    
+    const bookingDates = new Set(
+      this.allBookings().map(b => {
+        const d = new Date(b.date);
+        return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+      })
+    );
+
+    const days: CalendarDay[] = [];
+
+    // Previous month padding
+    const prevMonthDays = new Date(year, month, 0).getDate();
+    for (let i = firstDay - 1; i >= 0; i--) {
+      days.push({
+        day: prevMonthDays - i,
+        isCurrentMonth: false,
+        isToday: false,
+        hasBooking: false
+      });
+    }
+
+    // Current month days
+    for (let d = 1; d <= daysInMonth; d++) {
+      const dateKey = `${year}-${month}-${d}`;
+      days.push({
+        day: d,
+        isCurrentMonth: true,
+        isToday: today.getFullYear() === year && today.getMonth() === month && today.getDate() === d,
+        hasBooking: bookingDates.has(dateKey)
+      });
+    }
+
+    // Next month padding
+    const remaining = 42 - days.length;
+    for (let d = 1; d <= remaining; d++) {
+      days.push({
+        day: d,
+        isCurrentMonth: false,
+        isToday: false,
+        hasBooking: false
+      });
+    }
+
+    return days;
+  }
+
+  prevMonth(): void {
+    const current = this.currentMonth();
+    this.currentMonth.set(new Date(current.getFullYear(), current.getMonth() - 1, 1));
+  }
+
+  nextMonth(): void {
+    const current = this.currentMonth();
+    this.currentMonth.set(new Date(current.getFullYear(), current.getMonth() + 1, 1));
+  }
+
+  logout(): void {
+    this.store.dispatch(AuthActions.logout());
+  }
+}
+```
+
+---
+
+## features/expert/take-action-modal/take-action-modal.component.html
+
+- Absolute path: `/Users/suhas/Desktop/angular/housemate/src/app/features/expert/take-action-modal/take-action-modal.component.html`
+
+```html
+<!-- Take Action Modal -->
+<div class="modal-overlay" (click)="onOverlayClick($event)">
+  <div class="modal-container">
+    <!-- Header -->
+    <div class="modal-header">
+      <h2 class="modal-title">TAKE ACTION</h2>
+      <button class="modal-close" (click)="onClose()">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+          <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Body -->
+    <div class="modal-body">
+      <!-- Service Type & Earnings Row -->
+      <div class="info-row">
+        <div class="info-card service-type">
+          <span class="info-card__label">Service Type</span>
+          <div class="info-card__icon">
+            <img [src]="serviceIcon" [alt]="booking.serviceName" />
+          </div>
+          <span class="info-card__name">{{ booking.serviceName }}</span>
+        </div>
+        <div class="info-card earnings-card">
+          <span class="info-card__label">Earnings From This Booking</span>
+          <div class="earnings-display">
+            <div class="earnings-gift">
+              🎁
+            </div>
+            <span class="earnings-amount">₹{{ booking.totalAmount | number:'1.2-2' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Schedule & Customer Row -->
+      <div class="info-row">
+        <div class="info-card schedule-card">
+          <div class="info-card__header">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+              <rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" stroke-width="1.5"/>
+              <path d="M3 10H21" stroke="currentColor" stroke-width="1.5"/>
+              <path d="M8 2V6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+              <path d="M16 2V6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+            <span class="info-card__label">Schedule Details</span>
+          </div>
+          <div class="schedule-details">
+            <div class="detail-row">
+              <span class="detail-label">Frequency:</span>
+              <span class="detail-value">{{ frequency }}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Start Date:</span>
+              <span class="detail-value">{{ startDate }}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Time Slot:</span>
+              <span class="detail-value">{{ timeSlot }}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Duration per session:</span>
+              <span class="detail-value">{{ duration }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="info-card customer-card">
+          <div class="customer-section">
+            <div class="info-card__header">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                <path d="M12 12C14.7614 12 17 9.76142 17 7C17 4.23858 14.7614 2 12 2C9.23858 2 7 4.23858 7 7C7 9.76142 9.23858 12 12 12Z" stroke="currentColor" stroke-width="1.5"/>
+                <path d="M20 21C20 16.5817 16.4183 13 12 13C7.58172 13 4 16.5817 4 21" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+              </svg>
+              <span class="info-card__label">Customer Name</span>
+            </div>
+            <span class="customer-name">{{ customerName }}</span>
+          </div>
+
+          <div class="address-section">
+            <div class="info-card__header">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                <path d="M21 10C21 17 12 23 12 23C12 23 3 17 3 10C3 5 7 1 12 1C17 1 21 5 21 10Z" stroke="currentColor" stroke-width="1.5"/>
+                <circle cx="12" cy="10" r="3" stroke="currentColor" stroke-width="1.5"/>
+              </svg>
+              <span class="info-card__label">Service Address</span>
+            </div>
+            <span class="address-text">{{ serviceAddress }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Status display for non-pending bookings -->
+      @if (!isPending) {
+        <div class="status-banner" [class]="'status-' + booking.status.toLowerCase()">
+          <span>This booking has been <strong>{{ statusLabel }}</strong></span>
+        </div>
+      }
+    </div>
+
+    <!-- Footer - Action Buttons (only for PENDING) -->
+    @if (isPending) {
+      <div class="modal-footer">
+        <button class="btn-reject" (click)="onReject()">REJECT BOOKING</button>
+        <button class="btn-accept" (click)="onAccept()">ACCEPT BOOKING</button>
+      </div>
+    }
+  </div>
+</div>
+```
+
+---
+
+## features/expert/take-action-modal/take-action-modal.component.scss
+
+- Absolute path: `/Users/suhas/Desktop/angular/housemate/src/app/features/expert/take-action-modal/take-action-modal.component.scss`
+
+```scss
+// Take Action Modal Styles
+
+$navy: #0D436B;
+$teal: #0D9488;
+$red: #DC2626;
+$green: #16A34A;
+$gray-100: #F7F8FA;
+$gray-200: #E5E7EB;
+$gray-300: #D1D5DB;
+$gray-500: #6B7280;
+$gray-700: #374151;
+$gray-900: #111827;
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.modal-container {
+  background: white;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 680px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// Header
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 2rem 0;
+}
+
+.modal-title {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: $navy;
+  letter-spacing: 0.5px;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: $gray-500;
+  padding: 0.25rem;
+  border-radius: 8px;
+  transition: background 0.2s;
+
+  &:hover {
+    background: $gray-100;
+    color: $gray-900;
+  }
+}
+
+// Body
+.modal-body {
+  padding: 1.5rem 2rem;
+}
+
+.info-row {
+  display: grid;
+  grid-template-columns: 1fr 1.6fr;
+  gap: 1rem;
+  margin-bottom: 1rem;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+
+  @media (max-width: 580px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.info-card {
+  border: 1px solid $gray-200;
+  border-radius: 12px;
+  padding: 1.25rem;
+
+  &__label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: $gray-900;
+  }
+
+  &__header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+    color: $gray-700;
+  }
+
+  &__icon {
+    width: 60px;
+    height: 60px;
+    margin: 1rem auto 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    img {
+      width: 48px;
+      height: 48px;
+      object-fit: contain;
+    }
+  }
+
+  &__name {
+    display: block;
+    text-align: center;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: $gray-700;
+    background: $gray-100;
+    border-radius: 6px;
+    padding: 0.35rem 0.75rem;
+    margin: 0 auto;
+    width: fit-content;
+  }
+}
+
+// Service Type Card
+.service-type {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+// Earnings Card
+.earnings-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.earnings-display {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1rem;
+  justify-content: center;
+}
+
+.earnings-gift {
+  font-size: 3rem;
+}
+
+.earnings-amount {
+  font-size: 2.75rem;
+  font-weight: 800;
+  color: $gray-900;
+  font-family: 'Arial', sans-serif;
+}
+
+// Schedule Details
+.schedule-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.detail-label {
+  font-size: 0.82rem;
+  color: $gray-500;
+}
+
+.detail-value {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: $gray-900;
+}
+
+// Customer Card
+.customer-card {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.customer-name {
+  font-size: 0.9rem;
+  color: $gray-700;
+}
+
+.address-text {
+  font-size: 0.85rem;
+  color: $gray-500;
+  line-height: 1.4;
+}
+
+// Status Banner (for non-pending bookings)
+.status-banner {
+  padding: 0.75rem 1.25rem;
+  border-radius: 10px;
+  text-align: center;
+  font-size: 0.9rem;
+  margin-top: 1rem;
+
+  &.status-confirmed {
+    background: rgba($green, 0.1);
+    color: $green;
+  }
+
+  &.status-rejected {
+    background: rgba($red, 0.1);
+    color: $red;
+  }
+
+  &.status-cancelled {
+    background: rgba($red, 0.1);
+    color: $red;
+  }
+
+  &.status-completed {
+    background: rgba($teal, 0.1);
+    color: $teal;
+  }
+}
+
+// Footer
+.modal-footer {
+  display: flex;
+  gap: 1rem;
+  padding: 0 2rem 2rem;
+  justify-content: center;
+}
+
+.btn-reject,
+.btn-accept {
+  flex: 1;
+  padding: 0.9rem 1.5rem;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-reject {
+  background: white;
+  border: 2px solid $gray-300;
+  color: $gray-700;
+
+  &:hover {
+    border-color: $red;
+    color: $red;
+    background: rgba($red, 0.05);
+  }
+}
+
+.btn-accept {
+  background: $navy;
+  border: 2px solid $navy;
+  color: white;
+
+  &:hover {
+    background: darken($navy, 8%);
+  }
+}
+```
+
+---
+
+## features/expert/take-action-modal/take-action-modal.component.ts
+
+- Absolute path: `/Users/suhas/Desktop/angular/housemate/src/app/features/expert/take-action-modal/take-action-modal.component.ts`
+
+```ts
+import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { Booking } from '../../../core/store/booking/booking.actions';
+
+@Component({
+  selector: 'app-take-action-modal',
+  standalone: true,
+  imports: [CommonModule],
+  templateUrl: './take-action-modal.component.html',
+  styleUrl: './take-action-modal.component.scss'
+})
+export class TakeActionModalComponent {
+  @Input() booking!: Booking;
+  @Input() customer: any = null;
+  @Input() address: any = null;
+
+  @Output() close = new EventEmitter<void>();
+  @Output() accept = new EventEmitter<string>();
+  @Output() reject = new EventEmitter<string>();
+
+  // Service icons
+  serviceIcons: Record<string, string> = {
+    'Cleaning': 'assets/images/services/cleaning-icon.png',
+    'Cooking': 'assets/images/services/cooking-icon.png',
+    'Gardening': 'assets/images/services/gardening-icon.png',
+    'Plumbing': 'assets/images/services/plumbing-icon.png',
+    'Electrician': 'assets/images/services/electrician-icon.png',
+    'Baby Sitting': 'assets/images/services/babysitting-icon.png',
+    'Carpentry': 'assets/images/services/carpentry-icon.png',
+    'Painting': 'assets/images/services/painting-icon.png'
+  };
+
+  get serviceIcon(): string {
+    return this.serviceIcons[this.booking?.serviceName] || 'assets/images/services/cleaning-icon.png';
+  }
+
+  get customerName(): string {
+    return this.customer?.name || 'Customer';
+  }
+
+  get serviceAddress(): string {
+    if (this.address) {
+      return `${this.address.line1}, ${this.address.pincode}`;
+    }
+    return '201, Manjari Khurd, 143505';
+  }
+
+  get frequency(): string {
+    if (!this.booking?.frequency) return 'Once';
+    return this.booking.frequency.charAt(0).toUpperCase() + this.booking.frequency.slice(1);
+  }
+
+  get startDate(): string {
+    if (!this.booking?.date) return '';
+    const date = new Date(this.booking.date);
+    return date.toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' });
+  }
+
+  get timeSlot(): string {
+    if (!this.booking?.timeSlot) return '';
+    return this.booking.timeSlot.replace('-', '-');
+  }
+
+  get duration(): string {
+    return `${this.booking?.duration || 2} hours`;
+  }
+
+  get isPending(): boolean {
+    return this.booking?.status === 'PENDING';
+  }
+
+  get isConfirmed(): boolean {
+    return this.booking?.status === 'CONFIRMED';
+  }
+
+  get isRejected(): boolean {
+    return this.booking?.status === 'REJECTED';
+  }
+
+  get isCancelled(): boolean {
+    return this.booking?.status === 'CANCELLED';
+  }
+
+  get statusLabel(): string {
+    switch (this.booking?.status) {
+      case 'CONFIRMED': return 'Accepted';
+      case 'REJECTED': return 'Rejected';
+      case 'CANCELLED': return 'Cancelled';
+      case 'COMPLETED': return 'Completed';
+      default: return 'Pending';
+    }
+  }
+
+  onClose(): void {
+    this.close.emit();
+  }
+
+  onAccept(): void {
+    this.accept.emit(this.booking.id);
+  }
+
+  onReject(): void {
+    this.reject.emit(this.booking.id);
+  }
+
+  onOverlayClick(event: MouseEvent): void {
+    if ((event.target as HTMLElement).classList.contains('modal-overlay')) {
+      this.onClose();
     }
   }
 }
