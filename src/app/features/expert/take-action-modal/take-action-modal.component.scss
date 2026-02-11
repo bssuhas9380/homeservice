@@ -1,0 +1,293 @@
+// Take Action Modal Styles
+
+$navy: #0D436B;
+$teal: #0D9488;
+$red: #DC2626;
+$green: #16A34A;
+$gray-100: #F7F8FA;
+$gray-200: #E5E7EB;
+$gray-300: #D1D5DB;
+$gray-500: #6B7280;
+$gray-700: #374151;
+$gray-900: #111827;
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.modal-container {
+  background: white;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 680px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// Header
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 2rem 0;
+}
+
+.modal-title {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: $navy;
+  letter-spacing: 0.5px;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: $gray-500;
+  padding: 0.25rem;
+  border-radius: 8px;
+  transition: background 0.2s;
+
+  &:hover {
+    background: $gray-100;
+    color: $gray-900;
+  }
+}
+
+// Body
+.modal-body {
+  padding: 1.5rem 2rem;
+}
+
+.info-row {
+  display: grid;
+  grid-template-columns: 1fr 1.6fr;
+  gap: 1rem;
+  margin-bottom: 1rem;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+
+  @media (max-width: 580px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.info-card {
+  border: 1px solid $gray-200;
+  border-radius: 12px;
+  padding: 1.25rem;
+
+  &__label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: $gray-900;
+  }
+
+  &__header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+    color: $gray-700;
+  }
+
+  &__icon {
+    width: 60px;
+    height: 60px;
+    margin: 1rem auto 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    img {
+      width: 48px;
+      height: 48px;
+      object-fit: contain;
+    }
+  }
+
+  &__name {
+    display: block;
+    text-align: center;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: $gray-700;
+    background: $gray-100;
+    border-radius: 6px;
+    padding: 0.35rem 0.75rem;
+    margin: 0 auto;
+    width: fit-content;
+  }
+}
+
+// Service Type Card
+.service-type {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+// Earnings Card
+.earnings-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.earnings-display {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1rem;
+  justify-content: center;
+}
+
+.earnings-gift {
+  font-size: 3rem;
+}
+
+.earnings-amount {
+  font-size: 2.75rem;
+  font-weight: 800;
+  color: $gray-900;
+  font-family: 'Arial', sans-serif;
+}
+
+// Schedule Details
+.schedule-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.detail-label {
+  font-size: 0.82rem;
+  color: $gray-500;
+}
+
+.detail-value {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: $gray-900;
+}
+
+// Customer Card
+.customer-card {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.customer-name {
+  font-size: 0.9rem;
+  color: $gray-700;
+}
+
+.address-text {
+  font-size: 0.85rem;
+  color: $gray-500;
+  line-height: 1.4;
+}
+
+// Status Banner (for non-pending bookings)
+.status-banner {
+  padding: 0.75rem 1.25rem;
+  border-radius: 10px;
+  text-align: center;
+  font-size: 0.9rem;
+  margin-top: 1rem;
+
+  &.status-confirmed {
+    background: rgba($green, 0.1);
+    color: $green;
+  }
+
+  &.status-rejected {
+    background: rgba($red, 0.1);
+    color: $red;
+  }
+
+  &.status-cancelled {
+    background: rgba($red, 0.1);
+    color: $red;
+  }
+
+  &.status-completed {
+    background: rgba($teal, 0.1);
+    color: $teal;
+  }
+}
+
+// Footer
+.modal-footer {
+  display: flex;
+  gap: 1rem;
+  padding: 0 2rem 2rem;
+  justify-content: center;
+}
+
+.btn-reject,
+.btn-accept {
+  flex: 1;
+  padding: 0.9rem 1.5rem;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-reject {
+  background: white;
+  border: 2px solid $gray-300;
+  color: $gray-700;
+
+  &:hover {
+    border-color: $red;
+    color: $red;
+    background: rgba($red, 0.05);
+  }
+}
+
+.btn-accept {
+  background: $navy;
+  border: 2px solid $navy;
+  color: white;
+
+  &:hover {
+    background: darken($navy, 8%);
+  }
+}

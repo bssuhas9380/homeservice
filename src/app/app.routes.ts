@@ -69,7 +69,7 @@ export const routes: Routes = [
       }
     ]
   },
-  // Expert Routes (placeholder for future)
+  // Expert Routes
   {
     path: 'expert',
     canMatch: [expertMatchGuard],
@@ -77,7 +77,7 @@ export const routes: Routes = [
     children: [
       {
         path: 'dashboard',
-        loadComponent: () => import('./features/customer/dashboard/customer-dashboard.component').then(m => m.CustomerDashboardComponent), // Placeholder
+        loadComponent: () => import('./features/expert/dashboard/expert-dashboard.component').then(m => m.ExpertDashboardComponent),
         title: 'Expert Dashboard - HouseMate'
       },
       {

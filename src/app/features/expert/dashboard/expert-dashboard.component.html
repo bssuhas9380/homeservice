@@ -1,0 +1,286 @@
+<!-- Expert Dashboard -->
+<div class="dashboard-page">
+  <!-- Shared Navbar -->
+  <app-navbar [pageType]="'expert'" />
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <div class="dashboard-grid">
+      <!-- ===== LEFT COLUMN ===== -->
+      <div class="left-column">
+
+        <!-- Welcome Banner -->
+        <section class="welcome-banner">
+          <div class="welcome-banner__content">
+            <div class="welcome-banner__status">
+              <button class="online-toggle" [class.online]="isOnline()" (click)="toggleOnlineStatus()">
+                <span class="online-toggle__dot"></span>
+                <span class="online-toggle__label">{{ isOnline() ? 'Online' : 'Offline' }}</span>
+              </button>
+              <span class="ready-badge">Ready to accept jobs</span>
+            </div>
+            <p class="welcome-banner__greeting">Welcome back,</p>
+            <h1 class="welcome-banner__name">{{ userName().toUpperCase() }}!</h1>
+            <div class="welcome-banner__skills">
+              <span class="skills-label">Expert at</span>
+              <div class="skills-icons">
+                @for (skill of userSkills(); track skill) {
+                  <div class="skill-icon" [title]="skill">
+                    <img [src]="getSkillIcon(skill)" [alt]="skill" />
+                  </div>
+                }
+              </div>
+            </div>
+          </div>
+          <div class="welcome-banner__image">
+            <img src="assets/images/expert-hero.png" alt="Expert" />
+          </div>
+        </section>
+
+        <!-- My Reports -->
+        <section class="reports-section">
+          <h2 class="section-title">My Reports</h2>
+          <div class="reports-grid">
+            <div class="report-card">
+              <div class="report-card__icon report-card__icon--jobs">
+                <img src="assets/images/icons/todays-job.png" alt="Today's Job" />
+              </div>
+              <span class="report-card__label">Today's Job</span>
+              <span class="report-card__value">{{ bookingCounts().todaysJobs < 10 ? '0' + bookingCounts().todaysJobs : bookingCounts().todaysJobs }}</span>
+            </div>
+            <div class="report-card">
+              <div class="report-card__icon report-card__icon--week">
+                <img src="assets/images/icons/this-week.png" alt="This Week" />
+              </div>
+              <span class="report-card__label">This Week</span>
+              <span class="report-card__value">{{ bookingCounts().thisWeek < 10 ? '0' + bookingCounts().thisWeek : bookingCounts().thisWeek }}</span>
+            </div>
+            <div class="report-card">
+              <div class="report-card__icon report-card__icon--earnings">
+                <img src="assets/images/icons/total-earning.png" alt="Total Earning" />
+              </div>
+              <span class="report-card__label">Total Earning</span>
+              <span class="report-card__value">{{ formatEarnings(bookingCounts().totalEarnings) }}</span>
+            </div>
+            <div class="report-card">
+              <div class="report-card__icon report-card__icon--rating">
+                <img src="assets/images/icons/my-rating.png" alt="My Rating" />
+              </div>
+              <span class="report-card__label">My Rating</span>
+              <span class="report-card__value">{{ userRating() }}</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- My Appointments -->
+        <section class="appointments-section">
+          <div class="appointments-header">
+            <h2 class="section-title">My Appointments</h2>
+            <div class="appointments-controls">
+              <div class="search-box">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                  <circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2"/>
+                  <path d="M21 21L16.65 16.65" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+                <input type="text" placeholder="Search..." (input)="onSearchChange($event)" />
+              </div>
+              <div class="filter-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                  <path d="M22 3H2L10 12.46V19L14 21V12.46L22 3Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </div>
+              <select class="filter-select" (change)="setFilter($any($event.target).value)">
+                <option value="All">All</option>
+                <option value="PENDING">Pending</option>
+                <option value="CONFIRMED">Accepted</option>
+                <option value="REJECTED">Rejected</option>
+                <option value="CANCELLED">Cancelled</option>
+                <option value="COMPLETED">Completed</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="appointments-grid">
+            @if (isLoadingBookings()) {
+              <div class="loading-placeholder">Loading appointments...</div>
+            } @else if (filteredAppointments().length === 0) {
+              <div class="no-appointments">
+                <p>No appointments found.</p>
+              </div>
+            } @else {
+              @for (booking of filteredAppointments(); track booking.id) {
+                <div class="appointment-card" [class]="getStatusClass(booking.status)">
+                  <div class="appointment-card__header">
+                    <div class="appointment-card__icon">
+                      <img [src]="getServiceIcon(booking.serviceName)" [alt]="booking.serviceName" />
+                    </div>
+                    <div class="appointment-card__earning">
+                      <span class="earning-amount">₹{{ booking.totalAmount | number:'1.0-0' }}/-</span>
+                      <span class="earning-label">Earning</span>
+                    </div>
+                  </div>
+                  <div class="appointment-card__body">
+                    <div class="appointment-card__date">{{ formatBookingDate(booking.date) }}</div>
+                    <div class="appointment-card__time">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                        <path d="M12 6V12L16 14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                      </svg>
+                      {{ formatTimeSlot(booking.timeSlot) }}, booked for {{ booking.duration }}hrs
+                    </div>
+                    <div class="appointment-card__address">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                        <path d="M21 10C21 17 12 23 12 23C12 23 3 17 3 10C3 5 7 1 12 1C17 1 21 5 21 10Z" stroke="currentColor" stroke-width="2"/>
+                        <circle cx="12" cy="10" r="3" stroke="currentColor" stroke-width="2"/>
+                      </svg>
+                      201, Manjari Khurd, Pune - 143505
+                    </div>
+                    <div class="appointment-card__status" [class]="getStatusClass(booking.status)">
+                      @if (booking.status === 'CONFIRMED') {
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                          <circle cx="12" cy="12" r="10" stroke="#16a34a" stroke-width="2"/>
+                          <path d="M8 12L11 15L16 9" stroke="#16a34a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                      } @else if (booking.status === 'REJECTED' || booking.status === 'CANCELLED') {
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                          <circle cx="12" cy="12" r="10" stroke="#dc2626" stroke-width="2"/>
+                          <path d="M15 9L9 15M9 9L15 15" stroke="#dc2626" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                      }
+                      <span>{{ getStatusLabel(booking.status) }}</span>
+                    </div>
+                  </div>
+                  <div class="appointment-card__footer">
+                    <a class="view-details-link" (click)="viewDetails(booking)">View Details</a>
+                  </div>
+                </div>
+              }
+            }
+          </div>
+        </section>
+      </div>
+
+      <!-- ===== RIGHT COLUMN ===== -->
+      <div class="right-column">
+
+        <!-- Pending Requests -->
+        <section class="pending-section">
+          <h2 class="section-title section-title--red">Pending Requests</h2>
+          @if (pendingBookings().length === 0) {
+            <div class="no-pending">
+              <p>No pending requests right now.</p>
+            </div>
+          } @else {
+            @for (booking of pendingBookings(); track booking.id) {
+              <div class="pending-card">
+                <div class="pending-card__date">{{ formatBookingDate(booking.date) }}</div>
+                <div class="pending-card__time">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                    <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                    <path d="M12 6V12L16 14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  </svg>
+                  {{ formatTimeSlot(booking.timeSlot) }}, booked for {{ booking.duration }}hrs
+                </div>
+                <div class="pending-card__address">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                    <path d="M21 10C21 17 12 23 12 23C12 23 3 17 3 10C3 5 7 1 12 1C17 1 21 5 21 10Z" stroke="currentColor" stroke-width="2"/>
+                    <circle cx="12" cy="10" r="3" stroke="currentColor" stroke-width="2"/>
+                  </svg>
+                  201, Manjari Khurd, Pune - 143505
+                </div>
+                <button class="take-action-btn" (click)="openTakeAction(booking)">Take Action</button>
+              </div>
+            }
+          }
+        </section>
+
+        <!-- My Calendar -->
+        <section class="calendar-section">
+          <h2 class="section-title section-title--navy">My Calendar</h2>
+          <div class="calendar-widget">
+            <div class="calendar-widget__today">
+              <span class="calendar-widget__day-name">{{ todayDayName() }}</span>
+              <span class="calendar-widget__day-number">{{ todayDate() }}</span>
+            </div>
+            <div class="calendar-widget__month">
+              <div class="calendar-widget__month-header">
+                <button class="cal-nav" (click)="prevMonth()">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                    <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  </svg>
+                </button>
+                <span class="month-label">{{ currentMonthName() }} {{ currentYear() }}</span>
+                <button class="cal-nav" (click)="nextMonth()">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                    <path d="M9 18L15 12L9 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  </svg>
+                </button>
+              </div>
+              <div class="calendar-widget__grid">
+                <div class="cal-header">S</div>
+                <div class="cal-header">M</div>
+                <div class="cal-header">T</div>
+                <div class="cal-header">W</div>
+                <div class="cal-header">T</div>
+                <div class="cal-header">F</div>
+                <div class="cal-header">S</div>
+                @for (day of calendarDays(); track $index) {
+                  <div class="cal-day" 
+                    [class.other-month]="!day.isCurrentMonth"
+                    [class.today]="day.isToday"
+                    [class.has-booking]="day.hasBooking">
+                    {{ day.day }}
+                  </div>
+                }
+              </div>
+            </div>
+          </div>
+
+          <!-- Today's Schedule -->
+          <div class="today-schedule">
+            <h3 class="today-label">Today</h3>
+            @if (todayBookings().length === 0) {
+              <p class="no-today">No bookings today.</p>
+            } @else {
+              @for (booking of todayBookings(); track booking.id) {
+                <div class="today-item">
+                  <div class="today-item__icon">
+                    <img [src]="getServiceIcon(booking.serviceName)" [alt]="booking.serviceName" />
+                  </div>
+                  <div class="today-item__info">
+                    <span class="today-item__name">{{ booking.serviceName }}</span>
+                    <div class="today-item__time">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                        <path d="M12 6V12L16 14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                      </svg>
+                      {{ formatTimeSlot(booking.timeSlot) }}, booked for {{ booking.duration }}hrs
+                    </div>
+                    <div class="today-item__address">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                        <path d="M21 10C21 17 12 23 12 23C12 23 3 17 3 10C3 5 7 1 12 1C17 1 21 5 21 10Z" stroke="currentColor" stroke-width="2"/>
+                      </svg>
+                      201, Manjari Khurd, Pune - 143505
+                    </div>
+                  </div>
+                </div>
+              }
+            }
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Take Action Modal -->
+@if (showTakeActionModal() && selectedBooking()) {
+  <app-take-action-modal
+    [booking]="selectedBooking()!"
+    [customer]="selectedBookingCustomer()"
+    [address]="selectedBookingAddress()"
+    (close)="closeTakeActionModal()"
+    (accept)="onAcceptBooking($event)"
+    (reject)="onRejectBooking($event)"
+  />
+}

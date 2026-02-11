@@ -170,6 +170,75 @@ export const bookingReducer = createReducer(
     error
   })),
 
+  // Load Expert Bookings
+  on(BookingActions.loadExpertBookings, (state) => ({
+    ...state,
+    isLoading: true,
+    error: null
+  })),
+
+  on(BookingActions.loadExpertBookingsSuccess, (state, { bookings }) => 
+    bookingAdapter.setAll(bookings, {
+      ...state,
+      isLoading: false,
+      error: null
+    })
+  ),
+
+  on(BookingActions.loadExpertBookingsFailure, (state, { error }) => ({
+    ...state,
+    isLoading: false,
+    error
+  })),
+
+  // Accept Booking
+  on(BookingActions.acceptBooking, (state) => ({
+    ...state,
+    isLoading: true,
+    error: null
+  })),
+
+  on(BookingActions.acceptBookingSuccess, (state, { booking }) => 
+    bookingAdapter.updateOne(
+      { id: booking.id, changes: booking },
+      {
+        ...state,
+        isLoading: false,
+        error: null
+      }
+    )
+  ),
+
+  on(BookingActions.acceptBookingFailure, (state, { error }) => ({
+    ...state,
+    isLoading: false,
+    error
+  })),
+
+  // Reject Booking
+  on(BookingActions.rejectBooking, (state) => ({
+    ...state,
+    isLoading: true,
+    error: null
+  })),
+
+  on(BookingActions.rejectBookingSuccess, (state, { booking }) => 
+    bookingAdapter.updateOne(
+      { id: booking.id, changes: booking },
+      {
+        ...state,
+        isLoading: false,
+        error: null
+      }
+    )
+  ),
+
+  on(BookingActions.rejectBookingFailure, (state, { error }) => ({
+    ...state,
+    isLoading: false,
+    error
+  })),
+
   // Clear
   on(BookingActions.clearSelectedBooking, (state) => ({
     ...state,

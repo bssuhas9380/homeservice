@@ -103,3 +103,46 @@ export const selectBookingById = (bookingId: string) => createSelector(
   selectBookingEntities,
   (entities) => entities[bookingId]
 );
+
+// Expert-specific selectors
+export const selectPendingBookings = createSelector(
+  selectAllBookings,
+  (bookings) => bookings.filter(b => b.status === BookingStatus.PENDING)
+);
+
+export const selectConfirmedBookings = createSelector(
+  selectAllBookings,
+  (bookings) => bookings.filter(b => b.status === BookingStatus.CONFIRMED)
+);
+
+export const selectExpertBookingCounts = createSelector(
+  selectAllBookings,
+  (bookings) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const weekAgo = new Date(today);
+    weekAgo.setDate(weekAgo.getDate() - 7);
+
+    return {
+      todaysJobs: bookings.filter(b => {
+        const bDate = new Date(b.date || b.createdAt);
+        bDate.setHours(0, 0, 0, 0);
+        return bDate.getTime() === today.getTime() && 
+               (b.status === BookingStatus.CONFIRMED || b.status === BookingStatus.IN_PROGRESS);
+      }).length,
+      thisWeek: bookings.filter(b => {
+        const bDate = new Date(b.date || b.createdAt);
+        return bDate >= weekAgo && 
+               (b.status === BookingStatus.CONFIRMED || b.status === BookingStatus.COMPLETED);
+      }).length,
+      totalEarnings: bookings
+        .filter(b => b.status === BookingStatus.COMPLETED || b.status === BookingStatus.CONFIRMED)
+        .reduce((sum, b) => sum + (b.totalAmount || 0), 0),
+      pending: bookings.filter(b => b.status === BookingStatus.PENDING).length,
+      confirmed: bookings.filter(b => b.status === BookingStatus.CONFIRMED).length,
+      completed: bookings.filter(b => b.status === BookingStatus.COMPLETED).length,
+      rejected: bookings.filter(b => b.status === BookingStatus.REJECTED).length,
+      cancelled: bookings.filter(b => b.status === BookingStatus.CANCELLED).length
+    };
+  }
+);

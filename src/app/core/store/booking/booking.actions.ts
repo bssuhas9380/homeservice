@@ -59,10 +59,24 @@ export interface CreateBookingData {
 
 // Action Types
 export const BookingActionTypes = {
-  // Load Bookings
+  // Load Bookings (Customer)
   LOAD_BOOKINGS: '[Booking] Load Bookings',
   LOAD_BOOKINGS_SUCCESS: '[Booking] Load Bookings Success',
   LOAD_BOOKINGS_FAILURE: '[Booking] Load Bookings Failure',
+
+  // Load Expert Bookings
+  LOAD_EXPERT_BOOKINGS: '[Booking] Load Expert Bookings',
+  LOAD_EXPERT_BOOKINGS_SUCCESS: '[Booking] Load Expert Bookings Success',
+  LOAD_EXPERT_BOOKINGS_FAILURE: '[Booking] Load Expert Bookings Failure',
+
+  // Accept/Reject Booking
+  ACCEPT_BOOKING: '[Booking] Accept Booking',
+  ACCEPT_BOOKING_SUCCESS: '[Booking] Accept Booking Success',
+  ACCEPT_BOOKING_FAILURE: '[Booking] Accept Booking Failure',
+
+  REJECT_BOOKING: '[Booking] Reject Booking',
+  REJECT_BOOKING_SUCCESS: '[Booking] Reject Booking Success',
+  REJECT_BOOKING_FAILURE: '[Booking] Reject Booking Failure',
 
   // Load Single Booking
   LOAD_BOOKING: '[Booking] Load Booking',
@@ -190,6 +204,54 @@ export const updateBookingStatusFailure = createAction(
   props<{ error: string }>()
 );
 
+// Load Expert Bookings
+export const loadExpertBookings = createAction(
+  BookingActionTypes.LOAD_EXPERT_BOOKINGS,
+  props<{ expertId: string }>()
+);
+
+export const loadExpertBookingsSuccess = createAction(
+  BookingActionTypes.LOAD_EXPERT_BOOKINGS_SUCCESS,
+  props<{ bookings: Booking[] }>()
+);
+
+export const loadExpertBookingsFailure = createAction(
+  BookingActionTypes.LOAD_EXPERT_BOOKINGS_FAILURE,
+  props<{ error: string }>()
+);
+
+// Accept Booking
+export const acceptBooking = createAction(
+  BookingActionTypes.ACCEPT_BOOKING,
+  props<{ bookingId: string }>()
+);
+
+export const acceptBookingSuccess = createAction(
+  BookingActionTypes.ACCEPT_BOOKING_SUCCESS,
+  props<{ booking: Booking }>()
+);
+
+export const acceptBookingFailure = createAction(
+  BookingActionTypes.ACCEPT_BOOKING_FAILURE,
+  props<{ error: string }>()
+);
+
+// Reject Booking
+export const rejectBooking = createAction(
+  BookingActionTypes.REJECT_BOOKING,
+  props<{ bookingId: string; reason?: string }>()
+);
+
+export const rejectBookingSuccess = createAction(
+  BookingActionTypes.REJECT_BOOKING_SUCCESS,
+  props<{ booking: Booking }>()
+);
+
+export const rejectBookingFailure = createAction(
+  BookingActionTypes.REJECT_BOOKING_FAILURE,
+  props<{ error: string }>()
+);
+
 // Clear
 export const clearSelectedBooking = createAction(BookingActionTypes.CLEAR_SELECTED_BOOKING);
 export const clearBookingError = createAction(BookingActionTypes.CLEAR_BOOKING_ERROR);
@@ -214,6 +276,15 @@ export const BookingActions = {
   updateBookingStatus,
   updateBookingStatusSuccess,
   updateBookingStatusFailure,
+  loadExpertBookings,
+  loadExpertBookingsSuccess,
+  loadExpertBookingsFailure,
+  acceptBooking,
+  acceptBookingSuccess,
+  acceptBookingFailure,
+  rejectBooking,
+  rejectBookingSuccess,
+  rejectBookingFailure,
   clearSelectedBooking,
   clearBookingError
 };

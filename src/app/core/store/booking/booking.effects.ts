@@ -165,12 +165,89 @@ export class BookingEffects {
     )
   );
 
+  // Load Expert Bookings Effect
+  loadExpertBookings$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(BookingActions.loadExpertBookings),
+      exhaustMap(({ expertId }) =>
+        this.http.get<Booking[]>(`${this.API_URL}/bookings`, {
+          params: { expertId }
+        }).pipe(
+          map(bookings => BookingActions.loadExpertBookingsSuccess({ bookings })),
+          catchError(error => of(BookingActions.loadExpertBookingsFailure({ 
+            error: error.message || ERROR_MESSAGES.BOOKING.LOAD_FAILED 
+          })))
+        )
+      )
+    )
+  );
+
+  // Accept Booking Effect
+  acceptBooking$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(BookingActions.acceptBooking),
+      exhaustMap(({ bookingId }) =>
+        this.http.patch<Booking>(`${this.API_URL}/bookings/${bookingId}`, {
+          status: BookingStatus.CONFIRMED,
+          updatedAt: new Date().toISOString()
+        }).pipe(
+          map(booking => BookingActions.acceptBookingSuccess({ booking })),
+          catchError(error => of(BookingActions.acceptBookingFailure({ 
+            error: error.message || ERROR_MESSAGES.BOOKING.UPDATE_FAILED 
+          })))
+        )
+      )
+    )
+  );
+
+  // Accept Booking Success
+  acceptBookingSuccess$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(BookingActions.acceptBookingSuccess),
+      tap(() => {
+        this.notificationService.success('Success', 'Booking accepted successfully!');
+      })
+    ),
+    { dispatch: false }
+  );
+
+  // Reject Booking Effect
+  rejectBooking$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(BookingActions.rejectBooking),
+      exhaustMap(({ bookingId, reason }) =>
+        this.http.patch<Booking>(`${this.API_URL}/bookings/${bookingId}`, {
+          status: BookingStatus.REJECTED,
+          cancellationReason: reason || 'Rejected by expert',
+          updatedAt: new Date().toISOString()
+        }).pipe(
+          map(booking => BookingActions.rejectBookingSuccess({ booking })),
+          catchError(error => of(BookingActions.rejectBookingFailure({ 
+            error: error.message || ERROR_MESSAGES.BOOKING.UPDATE_FAILED 
+          })))
+        )
+      )
+    )
+  );
+
+  // Reject Booking Success
+  rejectBookingSuccess$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(BookingActions.rejectBookingSuccess),
+      tap(() => {
+        this.notificationService.success('Success', 'Booking rejected.');
+      })
+    ),
+    { dispatch: false }
+  );
+
   // Error Effects
   loadFailure$ = createEffect(() =>
     this.actions$.pipe(
       ofType(
         BookingActions.loadBookingsFailure,
-        BookingActions.loadBookingFailure
+        BookingActions.loadBookingFailure,
+        BookingActions.loadExpertBookingsFailure
       ),
       tap(({ error }) => {
         this.notificationService.error('Loading Error', error);
@@ -185,7 +262,9 @@ export class BookingEffects {
         BookingActions.createBookingFailure,
         BookingActions.updateBookingFailure,
         BookingActions.cancelBookingFailure,
-        BookingActions.updateBookingStatusFailure
+        BookingActions.updateBookingStatusFailure,
+        BookingActions.acceptBookingFailure,
+        BookingActions.rejectBookingFailure
       ),
       tap(({ error }) => {
         this.notificationService.error('Operation Failed', error);
